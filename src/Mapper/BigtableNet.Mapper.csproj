@@ -1,0 +1,97 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{B50F3F67-C0C5-48B7-94A2-AE1F270B7784}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>BigtableNet.Mapper</RootNamespace>
+    <AssemblyName>BigtableNet.Mapper</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Google.Protobuf, Version=3.0.0.0, Culture=neutral, PublicKeyToken=a7d26565bac4d604, processorArchitecture=MSIL">
+      <HintPath>..\packages\Google.Protobuf.3.0.0-alpha4\lib\portable-net45+netcore45+wpa81+wp8\Google.Protobuf.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Interactive.Async, Version=1.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Ix-Async.1.2.3\lib\net45\System.Interactive.Async.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Abstraction\BigTablePropertyAnnotation.cs" />
+    <Compile Include="Abstraction\ComplexTableBase.cs" />
+    <Compile Include="Abstraction\ColumnFamilyBase.cs" />
+    <Compile Include="Abstraction\SimpleTableBase.cs" />
+    <Compile Include="Annotations\BigTableAttribute.cs" />
+    <Compile Include="Annotations\BigTableKeyAttribute.cs" />
+    <Compile Include="Annotations\BigTableFieldAttribute.cs" />
+    <Compile Include="Annotations\ColumnFamilyAttribute.cs" />
+    <Compile Include="Bigtable.cs" />
+    <Compile Include="BigtableReadonly.cs" />
+    <Compile Include="Interfaces\IBigtableKeySerializer.cs" />
+    <Compile Include="Interfaces\IBigTableProperty.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Types\BigTableKey.cs" />
+    <Compile Include="Types\BigTableField.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\submodules\grpc\src\csharp\Grpc.Core\Grpc.Core.csproj">
+      <Project>{ccc4440e-49f7-4790-b0af-feabb0837ae7}</Project>
+      <Name>Grpc.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Common\BigtableNet.Common.csproj">
+      <Project>{2F248FDA-1B5F-4AEE-A134-BBD5A280D077}</Project>
+      <Name>BigtableNet.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Models\BigtableNet.Models.csproj">
+      <Project>{E2B66B7A-F748-470D-BEA6-DEADEE13AE30}</Project>
+      <Name>BigtableNet.Models</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Native\BigtableNet.Native.csproj">
+      <Project>{46387195-9ced-405a-8e0b-efde69e2ca26}</Project>
+      <Name>BigtableNet.Native</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
