@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BigtableNet.Common.Extensions;
 using BigtableNet.Mapper.Interfaces;
 
 namespace BigtableNet.Mapper.Types
 {
-    public struct BigTableField<T> : IBigTableProperty<T>
+    public struct BigTableField<T> : IBigTableField<T>
     {
         private T _value;
 
@@ -23,9 +24,26 @@ namespace BigtableNet.Mapper.Types
 
         public bool IsSpecified { get; set; }
 
+        public long Timestamp { get; set; }
 
-        long Timestamp { get; set; }
+        private List<string> _labels; 
 
+        public IEnumerable<string> Labels
+        {
+            get { return _labels ?? (_labels = new List<string>()); } 
+        }
+
+        public bool HasLabels
+        {
+            get { return _labels == null || !_labels.Any(); }
+        }
+
+        public IEnumerable<T> PreviousValues { get; internal set; }
+
+        public override string ToString()
+        {
+            return IsSpecified ? _value.ToString() : "{Unspecified}";
+        }
 
         public static implicit operator T(BigTableField<T> instance)
         {

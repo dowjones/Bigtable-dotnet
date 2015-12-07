@@ -1,17 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using BigtableNet.Common;
+using BigtableNet.Common.Extensions;
 using BigtableNet.Models.Abstraction;
 using BigtableNet.Models.Extensions;
-using BigtableNet.Models.Mode;
 using BigtableNet.Models.Types;
+using Google.Apis.Auth.OAuth2;
 using Google.Bigtable.Admin.Cluster.V1;
-using Google.Bigtable.Admin.Table.V1;
-using Google.Longrunning;
-using Grpc.Core;
 
 namespace BigtableNet.Models.Clients
 {
@@ -21,18 +18,23 @@ namespace BigtableNet.Models.Clients
 
         internal string ProjectUri { get; private set; }
 
-        public BigClusterClient(BigtableCredential credentials, BigtableConnectionConfig config) : base(config)
+
+        public BigClusterClient(BigtableCredentials credentials, string project, string zone, string cluster, bool isReadOnly) : this(credentials, new BigtableConfig(project, zone, cluster), isReadOnly)
+        {
+        }
+
+        public BigClusterClient(BigtableCredentials credentials, BigtableConfig config, bool isReadOnly = false) : base(config, credentials.CreateClusterChannel)
         {
             // Create
-            ProjectUri = config.ToProjectUri();
-            _client = new BigtableClusterService.BigtableClusterServiceClient(credentials.ToClusterChannel());
-            
+            _client = new BigtableClusterService.BigtableClusterServiceClient(Channel);
         }
+
 
         public async Task<IEnumerable<BigCluster>> ListClustersAsync(Action<BigZone> failedZonesHandler = null)
         {
             var request = new ListClustersRequest { Name = ProjectUri };
             var response = await _client.ListClustersAsync(request);
+            await Task.Yield();
 
             if (failedZonesHandler != null)
             {
@@ -45,39 +47,22 @@ namespace BigtableNet.Models.Clients
             return response.Clusters.Select(cluster => new BigCluster(this, cluster));
         }
 
-        public async Task<BigCluster> GetClusterAsync(string name, Action<Metadata.Entry> metadataHandler = null)
+        public async Task<BigCluster> GetClusterAsync(string name)
         {
             var request = new GetClusterRequest { Name = name.ToClusterUri(Config.ToZoneUri()) };
-            var response = _client.GetClusterAsync(request);
-
-            if (metadataHandler != null)
-            {
-                var headers = await response.ResponseHeadersAsync;
-                foreach (var header in headers)
-                    metadataHandler(header);
-            }
-
-            var results = await response.ResponseAsync;
-            return new BigCluster(this, results);
-
+            var response = await _client.GetClusterAsync(request);
+            await Task.Yield();
+            return new BigCluster(this, response);
         }
 
-        public async Task DeleteClusterAsync(string name, Action<Metadata.Entry> metadataHandler = null)
+        public async Task DeleteClusterAsync(string name)
         {
             var request = new DeleteClusterRequest { Name = name.ToClusterUri(Config.ToZoneUri()) };
-            var response = _client.DeleteClusterAsync(request);
-
-            if (metadataHandler != null)
-            {
-                var headers = await response.ResponseHeadersAsync;
-                foreach (var header in headers)
-                    metadataHandler(header);
-            }
-
-            await response.ResponseAsync;
+            await _client.DeleteClusterAsync(request);
+            await Task.Yield();
         }
 
-        public async Task<BigCluster> CreateClusterAsync(string name, Action<Metadata.Entry> metadataHandler = null)
+        public async Task<BigCluster> CreateClusterAsync(string name)
         {
             var request = new CreateClusterRequest
             {
@@ -85,17 +70,10 @@ namespace BigtableNet.Models.Clients
                 ClusterId = name
             };
 
-            var response = _client.CreateClusterAsync(request);
+            var response = await _client.CreateClusterAsync(request);
+            await Task.Yield();
 
-            if (metadataHandler != null)
-            {
-                var headers = await response.ResponseHeadersAsync;
-                foreach (var header in headers)
-                    metadataHandler(header);
-            }
-
-            var results = await response.ResponseAsync;
-            return new BigCluster(this, results);
+            return new BigCluster(this, response);
 
         }
 
@@ -103,7 +81,8 @@ namespace BigtableNet.Models.Clients
         {
             var request = new ListZonesRequest { Name = ProjectUri };
             var response = await _client.ListZonesAsync(request);
-            return response.Zones.Select(Zone => new BigZone(this, Zone));
+            await Task.Yield();
+            return response.Zones.Select(zone => new BigZone(this, zone));
         }
     }
 }

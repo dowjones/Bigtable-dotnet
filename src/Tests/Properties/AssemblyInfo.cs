@@ -1,18 +1,20 @@
 ﻿using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Shared = BigtableNet.Common.ProductInfo;
 
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("BigtableClient.Tests")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle(Shared.Name + " Unit Tests")]
+[assembly: AssemblyDescription(Shared.Description)]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("BigtableClient.Tests")]
-[assembly: AssemblyCopyright("Copyright ©  2015")]
-[assembly: AssemblyTrademark("")]
+[assembly: AssemblyCompany(Shared.Company)]
+[assembly: AssemblyProduct(Shared.Name)]
+[assembly: AssemblyCopyright(Shared.Copyright)]
+[assembly: AssemblyTrademark(Shared.Trademark)]
 [assembly: AssemblyCulture("")]
+[assembly: AssemblyVersion(Shared.Version)]
+[assembly: AssemblyFileVersion(Shared.FileVersion)]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
 // to COM components.  If you need to access a type in this assembly from 
@@ -21,16 +23,3 @@ using System.Runtime.InteropServices;
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("da3d1ee7-4390-4c44-b2b3-48a6de7b74b0")]
-
-// Version information for an assembly consists of the following four values:
-//
-//      Major Version
-//      Minor Version 
-//      Build Number
-//      Revision
-//
-// You can specify all the values or you can default the Build and Revision Numbers 
-// by using the '*' as shown below:
-// [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]

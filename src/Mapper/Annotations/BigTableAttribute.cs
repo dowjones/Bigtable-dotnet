@@ -1,26 +1,32 @@
 ﻿using System;
+using System.Text;
+using BigtableNet.Models.Abstraction;
+using BigtableNet.Models.Clients;
 
 namespace BigtableNet.Mapper.Annotations
 {
     public class BigTableAttribute : Attribute
     {
-        public string Name { get; set; }
+        private Encoding _encoder;
+
+        internal Encoding Encoding
+        {
+            get { return _encoder ?? (_encoder = (Encoding)Activator.CreateInstance(BigModel.DefaultEncoding.GetType())); }
+        }
+
+        public string TableName { get; set; }
         public BigTableAttribute() { }
 
-        public BigTableAttribute(string name)
+        public BigTableAttribute(string tableName)
         {
-            Name = name;
-        }
-        public string KeySeparator
-        {
-            get { throw new NotImplementedException(); }
-            set { throw new NotImplementedException(); }
+            TableName = tableName;
+            EncodingType = BigModel.DefaultEncoding.GetType();
         }
 
-        public Type KeySerializer
-        {
-            get { throw new NotImplementedException(); }
-            set { throw new NotImplementedException(); }
-        }
+        public string KeySeparator { get; set; }
+
+        public Type KeySerializer { get; set; }
+
+        public Type EncodingType { get; set; }
     }
 }

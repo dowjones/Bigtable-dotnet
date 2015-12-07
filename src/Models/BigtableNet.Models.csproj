@@ -22,6 +22,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <LangVersion>5</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -95,12 +96,13 @@
     <Compile Include="Abstraction\BigClient.cs" />
     <Compile Include="Abstraction\BigModel.cs" />
     <Compile Include="Clients\BigAdminClient.cs" />
-    <Compile Include="Extensions\BigtableConnectionConfigExtensions.cs" />
     <Compile Include="Extensions\ByteArrayExtensions.cs" />
-    <Compile Include="Extensions\ChannelExtensions.cs" />
     <Compile Include="Extensions\ColumnFamilyExtensions.cs" />
     <Compile Include="Extensions\EnumerableExtensions.cs" />
     <Compile Include="Extensions\StringExtensions.cs" />
+    <Compile Include="Interfaces\IRetentionPolicy.cs" />
+    <Compile Include="Types\RetentionPolicy.cs" />
+    <Compile Include="Types\BigChange.cs" />
     <Compile Include="Types\BigCluster.cs" />
     <Compile Include="Types\BigRow.cs" />
     <Compile Include="Types\BigFamily.cs" />

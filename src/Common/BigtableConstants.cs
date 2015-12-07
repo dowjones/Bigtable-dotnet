@@ -13,6 +13,7 @@
             public const string Table = "{0}/tables/{1}";
             public const string Family = "{0}/columnFamilies/{1}";
             public const string TableAdjunct = "/tables/";
+            public const string FamilyAdjunct = "/columnFamilies/";
         }
         public static class EndPoints
         {
@@ -30,6 +31,8 @@
                         //"https://www.googleapis.com/auth/bigtable.data",
                         //"https://www.googleapis.com/auth/bigtable.admin.table",
                         //"https://www.googleapis.com/auth/cloud-platform"
+                        //
+                        //https://www.googleapis.com/auth/cloud-bigtable.data.readonly
             */
             /// <summary>
             /// AdminScope is the OAuth scope for Cloud Bigtable table admin operations.
@@ -44,7 +47,7 @@
             /// <summary>
             /// ReadonlyScope is the OAuth scope for Cloud Bigtable read-only data operations.
             /// </summary>
-            public static readonly string Readonly = "https://www.googleapis.com/auth/bigtable.readonly";
+            public static readonly string Readonly = "https://www.googleapis.com/auth/cloud-bigtable.data.readonly";
 
             /// <summary>
             /// ClusterAdminScope is the OAuth scope for Cloud Bigtable cluster admin operations.

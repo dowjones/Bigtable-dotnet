@@ -22,6 +22,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <LangVersion>5</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -88,19 +89,37 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BigtableCredential.cs" />
-    <Compile Include="BigtableConnectionConfig.cs" />
+    <Compile Include="Constants.cs" />
+    <Compile Include="Extensions\BigtableConfigExtensions.cs" />
+    <Compile Include="BigtableCredentials.cs" />
+    <Compile Include="BigtableConfig.cs" />
     <Compile Include="BigtableConstants.cs" />
-    <Compile Include="BigtablePermissions.cs" />
-    <Compile Include="GcPolicy.cs" />
-    <Compile Include="Extensions.cs" />
-    <Compile Include="Observables.cs" />
+    <Compile Include="Extensions\DateTimeExtensions.cs" />
+    <Compile Include="Extensions\EnumerableExtensions.cs" />
+    <Compile Include="Extensions\StringExtensions.cs" />
+    <Compile Include="Extensions\TypeExtensions.cs" />
+    <Compile Include="Customization\ReconfigureGrpc.cs" />
+    <Compile Include="Customization\GrpcLoggingAdaptor.cs" />
+    <Compile Include="Implementation\AsyncEnumeratorObserver.cs" />
+    <Compile Include="Implementation\ChainedObservable.cs" />
+    <Compile Include="Implementation\Observable.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SerializationResolvers\DashContractResolver.cs" />
+    <Compile Include="ProductInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\submodules\grpc\src\csharp\Grpc.Auth\Grpc.Auth.csproj">
+      <Project>{AE21D0EE-9A2C-4C15-AB7F-5224EED5B0EA}</Project>
+      <Name>Grpc.Auth</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\submodules\grpc\src\csharp\Grpc.Core\Grpc.Core.csproj">
+      <Project>{CCC4440E-49F7-4790-B0AF-FEABB0837AE7}</Project>
+      <Name>Grpc.Core</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets" Condition="Exists('..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" />

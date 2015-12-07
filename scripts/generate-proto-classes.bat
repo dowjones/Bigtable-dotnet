@@ -1,7 +1,9 @@
-:# Run this tool from root git folder:  scripts\generate-proto-classes.bat
 @echo off
-SETLOCAL
+
+:# Run this tool from root git folder:  scripts\generate-proto-classes.bat
+
 :# Locals
+SETLOCAL
 set array=( bigtable\v1 bigtable\admin\cluster\v1 bigtable\admin\table\v1 api longrunning protobuf rpc type )
 set dest=src\Native\Generated
 

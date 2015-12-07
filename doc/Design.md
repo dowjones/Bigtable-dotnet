@@ -1,0 +1,5 @@
+## Async and your interaction with gRPC ##
+
+When your call reaches the boundary between Bigtable.NET and grpc, the call is dispatched to a (hopefully) waiting thread.  To be clear, the TPL implementation move your stack-frame to that of a thread started by grpc.  When the call returns, the AsyncCall<> class will running this context, and for good reason (it is consuming an HTTP/2.0 stream that it is responsible for managing).  The end results is that once data is available for the consumer, you are still on a grpc thread.  My chosen solution was to return to the caller context as the last operation of any network-bound call by invoking ```Task.Yield```.  This little-used and often-misunderstood signature will 'free' the call to tcs.SetResult which would otherwise continue to block.
+
+This works well, although it does incur a slight performance penalty.  The alternative is to allow consumer code to run on the grpc thread which prevents it from being available for grpc activity.  It did not seem like a good idea to put the requirement of yielding the task context on the consumer.

@@ -1,17 +1,21 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using BigtableNet.Common;
+using BigtableNet.Common.Extensions;
 using BigtableNet.Models.Extensions;
-using Google.Bigtable.Admin.Table.V1;
+using Google.Apis.Auth.OAuth2;
+using Grpc.Core;
+using Grpc.Core.Logging;
 
 namespace BigtableNet.Models.Abstraction
 {
-    public class BigClient
+    public abstract class BigClient : IDisposable
     {
-        protected readonly BigtableConnectionConfig Config;
+        protected readonly BigtableConfig Config;
+        protected readonly Channel Channel;
+        protected Func<Channel> ChannelCreator;
+
+        internal string ClusterUri { get; private set; }
 
 
         public string Project { get { return Config.Project; } }
@@ -20,11 +24,28 @@ namespace BigtableNet.Models.Abstraction
 
         public string Cluster { get { return Config.Cluster; } }
 
-        public BigClient(BigtableConnectionConfig config)
+        protected BigClient(BigtableConfig config, Func<Channel> channelCreator)
         {
-            // Store
-            //_credentials = credentials;
             Config = config;
+            Channel = channelCreator();
+            ChannelCreator = channelCreator;
+            ClusterUri = config.ToClusterUri();
+        }
+
+
+        public async Task Connect()
+        {
+            await Channel.ConnectAsync();
+        }
+
+        public async Task Disconnect()
+        {
+            await Channel.ShutdownAsync();
+        }
+
+        public void Dispose()
+        {
+            Task.Run(async () => await Channel.ShutdownAsync());
         }
     }
 }

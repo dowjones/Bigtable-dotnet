@@ -1,140 +1,191 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using BigtableNet.Common;
+using BigtableNet.Mapper.Implementation;
 using BigtableNet.Mapper.Interfaces;
 using BigtableNet.Mapper.Types;
 using BigtableNet.Models;
 using BigtableNet.Models.Clients;
 using BigtableNet.Models.Extensions;
 using BigtableNet.Models.Types;
+using Google.Apis.Auth.OAuth2;
 using Google.Bigtable.V1;
 using Google.Protobuf;
 
 namespace BigtableNet.Mapper
 {
-    public class Bigtable : BigtableReadonly
+    public class Bigtable : BigtableReader
     {
+        public Bigtable(BigtableCredentials credentials, string project, string zone, string cluster) : this(credentials, new BigtableConfig(project, zone, cluster))
+        {
 
-        public Bigtable(BigtableCredential credentials, BigtableConnectionConfig config)
+        }
+        public Bigtable(BigtableCredentials credentials, BigtableConfig config) : base(credentials, config)
         {
             AdminClient = new Lazy<BigAdminClient>(() => new BigAdminClient(credentials, config));
             DataClient = new Lazy<BigDataClient>(() => new BigDataClient(credentials, config));
         }
 
 
-
         public async Task UpdateAsync<T>(T instance, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var table = LocateTable<T>();
-            var key = ExtractKey(instance);
-            var mutations = ExtractMutations(instance);
-            await DataClient.Value.UpdateRowAsync(table, key, cancellationToken, mutations.ToArray());
+            var cache = ReflectionCache.For<T>();
+            var table = LocateTable<T>(cache);
+            var key = ExtractKey(cache, instance);
+            var changes = ExtractChanges(instance);
+            await DataClient.Value.WriteRowAsync(table, key, changes, cancellationToken);
         }
 
-        public async Task UpdateWhenTrueAsync<T>(T instance, Func<T, bool> predicate, Func<T, object> whenTrue, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<bool> UpdateWhenTrueAsync<T>(T instance, Expression<Func<T, bool>> predicate, Expression<Func<T, object>> whenTrue, CancellationToken cancellationToken = default(CancellationToken))
         {
-            await UpdateWhenAsync(instance, predicate, whenTrue, null, cancellationToken);
+            return await UpdateWhenAsync(instance, predicate, whenTrue, null, cancellationToken);
         }
-        public async Task UpdateWhenFalseAsync<T>(T instance, Func<T, bool> predicate, Func<T, object> whenFalse, CancellationToken cancellationToken = default(CancellationToken))
+
+        public async Task<bool> UpdateWhenFalseAsync<T>(T instance, Expression<Func<T, bool>> predicate, Expression<Func<T, object>> whenFalse, CancellationToken cancellationToken = default(CancellationToken))
         {
-            await UpdateWhenAsync(instance, predicate, null, whenFalse, cancellationToken);
+            return await UpdateWhenAsync(instance, predicate, null, whenFalse, cancellationToken);
         }
-        public async Task UpdateWhenAsync<T>(T instance, Func<T,bool> predicate, Func<T,object> whenTrue = null, Func<T,object> whenFalse = null, CancellationToken cancellationToken = default(CancellationToken))
+
+        public async Task<bool> UpdateWhenAsync<T>(T instance, Expression<Func<T, bool>> predicate, Expression<Func<T, object>> whenTrue = null, Expression<Func<T, object>> whenFalse = null, CancellationToken cancellationToken = default(CancellationToken))
         {
-            if( whenTrue == null && whenFalse == null )
+            if (whenTrue == null && whenFalse == null)
                 throw new ArgumentNullException("whenTrue", "Must set whenTrue or whenFalse to perform and UpdateWhen");
-            var table = LocateTable<T>();
-            var key = ExtractKey(instance);
+            var cache = ReflectionCache.For<T>();
+            var table = LocateTable<T>(cache);
+            var key = ExtractKey(cache, instance);
             var filter = ExtractFilter(predicate);
             var trueCase = ExtractMutateWhen(whenTrue);
             var falseCase = ExtractMutateWhen(whenFalse);
-            await DataClient.Value.UpdateRowWhenAsync(table, key, filter, trueCase, falseCase, cancellationToken);
+            return await DataClient.Value.WriteWhenAsync(table, key, filter, trueCase, falseCase, cancellationToken);
         }
 
-        private RowFilter ExtractFilter<T>(Func<T, bool> predicate)
+
+
+        public async Task<IEnumerable<BigRow>>  IncrementFieldAsync<T, TParameter>(T instance, Expression<Func<T, TParameter>> field, long value = 1, CancellationToken cancellationToken = default(CancellationToken))
+            where TParameter : IBigTableField
+        {
+            var cache = ReflectionCache.For<T>();
+            var table = LocateTable<T>(cache);
+            var key = ExtractKey(cache, instance);
+            var rule = CreateIncrementRule(cache, table, field, value);
+            return await DataClient.Value.WriteRowAsync(table, key, cancellationToken, new[] { rule  });
+        }
+
+        public async Task<IEnumerable<BigRow>> AppendFieldAsync<T, TParameter>(T instance, Expression<Func<T, TParameter>> field, string value, CancellationToken cancellationToken = default(CancellationToken))
+            where TParameter : IBigTableField
+        {
+            var cache = ReflectionCache.For<T>();
+            var table = LocateTable<T>(cache);
+            var key = ExtractKey(cache, instance);
+            var rule = CreateAppendRule(cache, table, field, value);
+            return await DataClient.Value.WriteRowAsync(table, key, cancellationToken, new[] { rule });
+        }
+
+
+        public async Task<IEnumerable<BigRow>> AppendFieldAsync<T, TParameter>(T instance, Expression<Func<T, TParameter>> field, byte[] value, CancellationToken cancellationToken = default(CancellationToken))
+            where TParameter : IBigTableField
+        {
+            var cache = ReflectionCache.For<T>();
+            var table = LocateTable<T>(cache);
+            var key = ExtractKey(cache, instance);
+            var rule = CreateAppendRule(cache, table, field, value);
+            return await DataClient.Value.WriteRowAsync(table, key, cancellationToken, new[] { rule });
+        }
+
+
+
+        private BigChange.FromRead CreateIncrementRule<T, TParameter>(ReflectionCache cache, BigTable table, Expression<Func<T, TParameter>> field, long value)
+            where TParameter : IBigTableField
+        {
+            var columnName = ExtractColumnName(cache, field);
+            var familyName = ExtractFamilyName<T, TParameter>(cache, field);
+            return BigChange.FromRead.CreateCellIncrement(familyName, columnName, value, table.Encoding);
+        }
+
+        private BigChange.FromRead CreateAppendRule<T, TParameter>(ReflectionCache cache, BigTable table, Expression<Func<T, TParameter>> field, string value)
+            where TParameter : IBigTableField
+        {
+            var columnName = ExtractColumnName(cache, field);
+            var familyName = ExtractFamilyName<T, TParameter>(cache, field);
+            return BigChange.FromRead.CreateCellAppend(familyName, columnName, value, table.Encoding);
+        }
+
+        private BigChange.FromRead CreateAppendRule<T, TParameter>(ReflectionCache cache, BigTable table, Expression<Func<T, TParameter>> field, byte[] value)
+            where TParameter : IBigTableField
+        {
+            var columnName = ExtractColumnName(cache, field);
+            var familyName = ExtractFamilyName<T, TParameter>(cache, field);
+            return BigChange.FromRead.CreateCellAppend(familyName, columnName, value, table.Encoding);
+        }
+
+
+
+        private string ExtractFamilyName<T, TParameter>(ReflectionCache cache, Expression<Func<T, TParameter>> field)
+            where TParameter : IBigTableField
         {
             throw new NotImplementedException();
         }
 
-        private IEnumerable<Mutation> ExtractMutateWhen<T>(Func<T, object> whenTrue)
+        private string ExtractColumnName<T, TParameter>(ReflectionCache cache, Expression<Func<T, TParameter>> field)
+        {
+            MemberInfo member = GetMemberInfo(field);
+
+            if (!cache.FieldNameLookup.ContainsKey(member.Name))
+                throw new MissingFieldException(typeof (T).Name, member.Name);
+
+            return cache.FieldNameLookup[member.Name];
+        }
+
+        private RowFilter ExtractFilter<T>(Expression<Func<T, bool>> predicate)
         {
             throw new NotImplementedException();
         }
 
-
-        public async Task IncrementFieldAsync<T, TParameter>(T instance, Func<T, TParameter> field, long value = 1, CancellationToken cancellationToken = default(CancellationToken))
-            where TParameter : IBigTableProperty
+        private IEnumerable<Mutation> ExtractMutateWhen<T>(Expression<Func<T, object>> whenTrue)
         {
-            var table = LocateTable<T>();
-            var key = ExtractKey(instance);
-            var rule = CreateIncrementRule(field, value);
-            await DataClient.Value.UpdateRowAsync(table, key, cancellationToken, rule);
-        }
-        public async Task AppendFieldAsync<T, TParameter>(T instance, Func<T, TParameter> field, string value, CancellationToken cancellationToken = default(CancellationToken))
-            where TParameter : IBigTableProperty
-        {
-            var table = LocateTable<T>();
-            var key = ExtractKey(instance);
-            var rule = CreateAppendRule(field, value.ToByteString(table.Encoding));
-            await DataClient.Value.UpdateRowAsync(table, key, cancellationToken, rule);
+            throw new NotImplementedException();
         }
 
-        public async Task AppendFieldAsync<T, TParameter>(T instance, Func<T, TParameter> field, byte[] value, CancellationToken cancellationToken = default(CancellationToken))
-            where TParameter : IBigTableProperty
+        private IEnumerable<BigChange> ExtractChanges<T>(T instance)
         {
-            var table = LocateTable<T>();
-            var key = ExtractKey(instance);
-            var rule = CreateAppendRule(field, value.ToByteString());
-            await DataClient.Value.UpdateRowAsync(table, key, cancellationToken, rule);
+            return null;
         }
 
-        private ReadModifyWriteRule CreateIncrementRule<T, TParameter>(Func<T, TParameter> field, long value)
-            where TParameter : IBigTableProperty
+        private static MemberInfo GetMemberInfo<T, TParameter>(Expression<Func<T, TParameter>> lambda)
         {
-            return new ReadModifyWriteRule
+            MemberExpression expression = lambda.Body as MemberExpression;
+            if (expression == null)
             {
-                IncrementAmount = value,
-                ColumnQualifier = ExtractColumnName<T, TParameter>(field),
-                FamilyName = ExtractFamilyName<T, TParameter>(field)
-            };
-        }
-        private ReadModifyWriteRule CreateAppendRule<T, TParameter>(Func<T, TParameter> field, ByteString value)
-            where TParameter : IBigTableProperty
-        {
-            return new ReadModifyWriteRule
+                throw new ArgumentException(String.Format("Expression '{0}' refers to a method, not a property or field.", lambda));
+            }
+
+            PropertyInfo propInfo = expression.Member as PropertyInfo;
+            FieldInfo fieldInfo = expression.Member as FieldInfo;
+            bool isProperty = propInfo == null;
+            bool isField = fieldInfo == null;
+            if (!isProperty && isField)
             {
-                AppendValue = value,
-                ColumnQualifier = ExtractColumnName<T, TParameter>(field),
-                FamilyName = ExtractFamilyName<T, TParameter>(field)
-            };
-        }
+                throw new ArgumentException(String.Format("Expression '{0}' refers to a field, not a property or field.", lambda));
+            }
 
-        private string ExtractFamilyName<T, TParameter>(Func<T, TParameter> field) 
-            where TParameter : IBigTableProperty
-        {
-            throw new NotImplementedException();
-        }
 
-        private ByteString ExtractColumnName<T, TParameter>(Func<T, TParameter> field)
-        {
-            throw new NotImplementedException();
-        }
 
-        private IEnumerable<Mutation> ExtractMutations<T>(T instance)
-        {
-            var result = new Mutation();
-            //result.SetCell = new Mutation.Types.SetCell
-            //result.DeleteFromRow
-            //result.DeleteFromColumn
-            //result.DeleteFromFamily
-            return new [] { result };
-        }
+            //Type type = typeof(TTable);
+            //if (type != propInfo.ReflectedType && !type.IsSubclassOf(propInfo.ReflectedType) && !propInfo.ReflectedType.IsAssignableFrom(type))
+            //{
+            //    throw new ArgumentException(string.Format("Expression '{0}' refers to a property that is not from type {1}.", lambda, type));
+            //}
 
+            return expression.Member;
+        }
 
     }
 }

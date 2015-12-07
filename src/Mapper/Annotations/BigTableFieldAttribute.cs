@@ -7,9 +7,9 @@ using BigtableNet.Mapper.Abstraction;
 
 namespace BigtableNet.Mapper.Annotations
 {
-    public class BigTableFieldAttribute : BigTablePropertyAnnotation
+    public class BigTableFieldAttribute : BigTableFieldAnnotation
     {
-        public string Name { get; set; }
+        internal string Name { get; set; }
 
         public BigTableFieldAttribute()
         {

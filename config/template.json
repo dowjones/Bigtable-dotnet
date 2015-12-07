@@ -1,6 +1,5 @@
 {
     "project": "<PROJECT-ID>",
     "zone": "<ZONE-ID>",
-    "cluster": "<CLUSTER-ID>",
-    "credentials-file": "<PATH-AND-FILE>.json"
+    "cluster": "<CLUSTER-ID>"
 }

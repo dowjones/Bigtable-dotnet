@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using BigtableNet.Common.Extensions;
 using BigtableNet.Models.Types;
 
 namespace BigtableNet.Mapper.Abstraction
@@ -15,7 +16,7 @@ namespace BigtableNet.Mapper.Abstraction
         {
             var type = typeof(T);
             if (_families.ContainsKey(type))
-                throw new DuplicateNameException(String.Format("Adding Family {0} to {1}", type.Name, GetType().Name));
+                throw new DuplicateNameException(String.Format("Adding Family {0} to {1}", type.SimpleName(), GetType().Name));
             _families.Add(type, default(T));
         }
 

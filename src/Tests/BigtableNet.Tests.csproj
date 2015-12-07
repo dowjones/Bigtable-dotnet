@@ -22,6 +22,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <LangVersion>5</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -47,6 +48,16 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Net" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Net.Http.Extensions, Version=2.2.29.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Net.Http.2.2.29\lib\net45\System.Net.Http.Extensions.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Net.Http.Primitives, Version=4.2.29.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Net.Http.2.2.29\lib\net45\System.Net.Http.Primitives.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Net.Http.WebRequest" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -58,7 +69,30 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\submodules\grpc\src\csharp\Grpc.Core\Grpc.Core.csproj">
+      <Project>{ccc4440e-49f7-4790-b0af-feabb0837ae7}</Project>
+      <Name>Grpc.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Common\BigtableNet.Common.csproj">
+      <Project>{2f248fda-1b5f-4aee-a134-bbd5a280d077}</Project>
+      <Name>BigtableNet.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Mapper\BigtableNet.Mapper.csproj">
+      <Project>{b50f3f67-c0c5-48b7-94a2-ae1f270b7784}</Project>
+      <Name>BigtableNet.Mapper</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Models\BigtableNet.Models.csproj">
+      <Project>{e2b66b7a-f748-470d-bea6-deadee13ae30}</Project>
+      <Name>BigtableNet.Models</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Native\BigtableNet.Native.csproj">
+      <Project>{46387195-9ced-405a-8e0b-efde69e2ca26}</Project>
+      <Name>BigtableNet.Native</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets" Condition="Exists('..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" />

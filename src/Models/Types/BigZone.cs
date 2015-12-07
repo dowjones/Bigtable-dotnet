@@ -11,12 +11,10 @@ namespace BigtableNet.Models.Types
 {
     public class BigZone : BigModel
     {
-        private BigClusterClient bigClusterClient;
         private Zone failedZone;
 
         internal BigZone(BigClusterClient bigClusterClient, Zone failedZone)
         {
-            this.bigClusterClient = bigClusterClient;
             this.failedZone = failedZone;
         }
     }

@@ -24,7 +24,7 @@ namespace BigtableNet.Models.Extensions
 
         internal static string ToFamilyUri(this string familyName, string clusterUri, string tableName)
         {
-            return String.Format(BigtableConstants.Templates.Table, tableName.ToTableUri(clusterUri), familyName);
+            return String.Format(BigtableConstants.Templates.Family, tableName.ToTableUri(clusterUri), familyName);
         }
 
         public static ByteString ToByteString(this string value, Encoding encoding)

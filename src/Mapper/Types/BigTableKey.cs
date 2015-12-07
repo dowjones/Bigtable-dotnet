@@ -4,11 +4,12 @@ using System.Data.SqlTypes;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BigtableNet.Common.Extensions;
 using BigtableNet.Mapper.Interfaces;
 
 namespace BigtableNet.Mapper.Types
 {
-    public struct BigTableKey<T>: IBigTableProperty<T>
+    public struct BigTableKey<T>: IBigTableField<T>
     {
         private T _value;
 
@@ -23,6 +24,11 @@ namespace BigtableNet.Mapper.Types
         }
 
         public bool IsSpecified { get; set; }
+
+        public override string ToString()
+        {
+            return IsSpecified ? _value.ToString() : "{Unspecified}";
+        }
 
         public static implicit operator T(BigTableKey<T> instance)
         {

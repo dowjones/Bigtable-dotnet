@@ -7,13 +7,13 @@ using BigtableNet.Mapper.Abstraction;
 
 namespace BigtableNet.Mapper.Annotations
 {
-    public class BigTableKeyAttribute : BigTablePropertyAnnotation
+    public class BigTableKeyAttribute : BigTableFieldAnnotation
     {
-        public string DefaultKeySeparator { get; set; }
+        public int Ordinal { get; set; }
 
         public BigTableKeyAttribute()
         {
-            DefaultKeySeparator = ":";
+            Ordinal = int.MaxValue;
         }
     }
 }

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using BigtableNet.Common;
+using BigtableNet.Models.Types;
 using Google.Bigtable.Admin.Table.V1;
 using Google.Protobuf;
 
@@ -11,24 +12,23 @@ namespace BigtableNet.Models.Extensions
 {
     public static class ColumnFamilyExtensions
     {
-        public static ColumnFamily ToColumnFamily(this GcPolicy policy, string name)
+        public static ColumnFamily ToColumnFamilyPrototype(this RetentionPolicy policy)
         {
             var result = new ColumnFamily
             {
-                Name = name,
                 GcRule = new GcRule(),
             };
             switch (policy.Duration)
             {
-                case DurationTypes.Revisions:
+                case DurationTypes.Versions:
                     if( policy.MaxAge > Int32.MaxValue )
                         throw new ArgumentOutOfRangeException("Revisions are limited to " + Int32.MaxValue);
 
-                    result.GcRule.MaxNumVersions = (int) policy.MaxAge;
+                    result.GcRule.MaxNumVersions =  policy.MaxAge > 0 ? (int)policy.MaxAge : 1;
                     break;
 
-                case DurationTypes.Microseconds:
-                    var value = policy.MaxAge/1000000;
+                case DurationTypes.Milliseconds:
+                    var value = policy.MaxAge/1000000; // 1000 to micro, 1000 to milli
                     if (value > Int32.MaxValue)
                         throw new ArgumentOutOfRangeException("Milliseconds are limited to " + Int32.MaxValue);
 

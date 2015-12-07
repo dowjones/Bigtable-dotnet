@@ -4,13 +4,13 @@ VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BigtableNet.Tests", "Tests\BigtableNet.Tests.csproj", "{FF131BC0-2E99-4584-A43B-72C7575BCAFD}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{C2C38664-361F-44B3-B21B-92784CBDAE15}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{C2C38664-361F-44B3-B21B-92784CBDAE15}"
 	ProjectSection(SolutionItems) = preProject
 		..\scripts\generate-proto-classes.bat = ..\scripts\generate-proto-classes.bat
-		..\scripts\generate-protos.sh = ..\scripts\generate-protos.sh
+		..\scripts\generate-proto-classes.sh = ..\scripts\generate-proto-classes.sh
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "protos", "protos", "{A3BD5BD4-EA33-4ABF-A9C3-C46F1D4D911F}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Protos", "Protos", "{A3BD5BD4-EA33-4ABF-A9C3-C46F1D4D911F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "api", "api", "{EB8D904A-5A80-4512-B4F3-B8EF479CAB42}"
 	ProjectSection(SolutionItems) = preProject
@@ -93,9 +93,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Grpc.Auth", "..\submodules\
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{A1B6B266-BF01-4F30-8023-F7078A61BF43}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Grpc", "Grpc", "{94F6B99A-C1A8-4651-BFAE-7B82D844AA84}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Submodules", "Submodules", "{94F6B99A-C1A8-4651-BFAE-7B82D844AA84}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Examples.LowLevel", "Examples\LowLevel\Examples.LowLevel.csproj", "{258A7B4C-9691-4F8B-9CA5-C82899DC586A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{2D35D267-BE90-4C0E-9F2D-47CE31BAF3BD} = {2D35D267-BE90-4C0E-9F2D-47CE31BAF3BD}
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Config", "Config", "{22F07C43-FD45-4A59-B47D-1281FFC2E227}"
 	ProjectSection(SolutionItems) = preProject
@@ -110,8 +113,31 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BigtableNet.Mapper", "Mapper\BigtableNet.Mapper.csproj", "{B50F3F67-C0C5-48B7-94A2-AE1F270B7784}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Examples.Modeled", "Examples\Modeled\Examples.Modeled.csproj", "{6D3BEEFD-5AB5-444A-AF43-42C276C9CE00}"
+	ProjectSection(ProjectDependencies) = postProject
+		{2D35D267-BE90-4C0E-9F2D-47CE31BAF3BD} = {2D35D267-BE90-4C0E-9F2D-47CE31BAF3BD}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Examples.Mapped", "Examples\Mapped\Examples.Mapped.csproj", "{14F1A192-5BE9-4BA8-94AC-4923B8107AFA}"
+	ProjectSection(ProjectDependencies) = postProject
+		{2D35D267-BE90-4C0E-9F2D-47CE31BAF3BD} = {2D35D267-BE90-4C0E-9F2D-47CE31BAF3BD}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Examples.Bootstrap", "Examples\Bootstrap\Examples.Bootstrap.csproj", "{2D35D267-BE90-4C0E-9F2D-47CE31BAF3BD}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{070F4834-E999-453F-8685-C02888F36BC8}"
+	ProjectSection(SolutionItems) = preProject
+		..\doc\ChangeLog.md = ..\doc\ChangeLog.md
+		..\doc\Design.md = ..\doc\Design.md
+		..\doc\Installation.md = ..\doc\Installation.md
+		..\README.md = ..\README.md
+		..\doc\Todo.md = ..\doc\Todo.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Legal", "Legal", "{C606DFEB-9D02-405D-B2F6-38A520B0EBEE}"
+	ProjectSection(SolutionItems) = preProject
+		..\DISCLAIMER.md = ..\DISCLAIMER.md
+		..\LICENSE.md = ..\LICENSE.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -180,6 +206,18 @@ Global
 		{14F1A192-5BE9-4BA8-94AC-4923B8107AFA}.Release|Any CPU.Build.0 = Release|Any CPU
 		{14F1A192-5BE9-4BA8-94AC-4923B8107AFA}.ReleaseSigned|Any CPU.ActiveCfg = Release|Any CPU
 		{14F1A192-5BE9-4BA8-94AC-4923B8107AFA}.ReleaseSigned|Any CPU.Build.0 = Release|Any CPU
+		{EFDC4FAD-9CC7-465A-A1DB-C4CD17B9B4EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EFDC4FAD-9CC7-465A-A1DB-C4CD17B9B4EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EFDC4FAD-9CC7-465A-A1DB-C4CD17B9B4EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EFDC4FAD-9CC7-465A-A1DB-C4CD17B9B4EF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EFDC4FAD-9CC7-465A-A1DB-C4CD17B9B4EF}.ReleaseSigned|Any CPU.ActiveCfg = Release|Any CPU
+		{EFDC4FAD-9CC7-465A-A1DB-C4CD17B9B4EF}.ReleaseSigned|Any CPU.Build.0 = Release|Any CPU
+		{2D35D267-BE90-4C0E-9F2D-47CE31BAF3BD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2D35D267-BE90-4C0E-9F2D-47CE31BAF3BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2D35D267-BE90-4C0E-9F2D-47CE31BAF3BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2D35D267-BE90-4C0E-9F2D-47CE31BAF3BD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2D35D267-BE90-4C0E-9F2D-47CE31BAF3BD}.ReleaseSigned|Any CPU.ActiveCfg = Release|Any CPU
+		{2D35D267-BE90-4C0E-9F2D-47CE31BAF3BD}.ReleaseSigned|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -202,5 +240,8 @@ Global
 		{258A7B4C-9691-4F8B-9CA5-C82899DC586A} = {A1B6B266-BF01-4F30-8023-F7078A61BF43}
 		{6D3BEEFD-5AB5-444A-AF43-42C276C9CE00} = {A1B6B266-BF01-4F30-8023-F7078A61BF43}
 		{14F1A192-5BE9-4BA8-94AC-4923B8107AFA} = {A1B6B266-BF01-4F30-8023-F7078A61BF43}
+		{EFDC4FAD-9CC7-465A-A1DB-C4CD17B9B4EF} = {A1B6B266-BF01-4F30-8023-F7078A61BF43}
+		{2D35D267-BE90-4C0E-9F2D-47CE31BAF3BD} = {A1B6B266-BF01-4F30-8023-F7078A61BF43}
+		{C606DFEB-9D02-405D-B2F6-38A520B0EBEE} = {070F4834-E999-453F-8685-C02888F36BC8}
 	EndGlobalSection
 EndGlobal
