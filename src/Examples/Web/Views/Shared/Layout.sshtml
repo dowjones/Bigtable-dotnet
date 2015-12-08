@@ -1,0 +1,22 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>BigTableNet Example Web App</title>
+
+    <link href="/Content/site.css" rel="stylesheet">
+</head>
+<body>
+    <div id="body-wrap">
+        <div id="left-nav">
+            <img src="/Content/Images/Bigtable.Net.png" />
+            @Partial['_LeftNav.sshtml'];
+        </div>
+
+        <div id="content-wrap">
+            @Section['Content'];
+        </div>
+    </div>
+</body>
+</html>

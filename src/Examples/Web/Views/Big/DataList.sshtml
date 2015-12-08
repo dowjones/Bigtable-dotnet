@@ -1,0 +1,39 @@
+﻿@Master['Layout.sshtml']
+
+@Section['Content']
+<div>
+    <form action="/big/data/list" method="GET">
+        @Partial['_TableSelect', Model.Tables]
+
+        <label for="start-key">Start Key:</label>
+        <input id="start-key" type="text" name="skey" value="@Model.StartKey" class="large-input">
+
+        <label for="end-key">End Key:</label>
+        <input id="end-key" type="text" name="ekey" value="@Model.EndKey" class="large-input">
+
+        <label for="max-rows">Max Rows:</label>
+        <input id="max-rows" type="text" name="maxrows" value="@Model.MaxRows" class="small-input">
+
+        <input type="submit" value="Go">
+    </form>
+</div>
+
+<div class="data">
+    <table class="paged">
+        @Partial['_DataListHeader']
+        <tbody>
+        @Each.Rows
+            @Partial['_DataListRow', Current]
+        @EndEach
+        </tbody>
+    </table>
+
+    @If.HasStartLink
+        <a href="/big/data/list?skey=@Model.StartKey&ekey=@Model.EndKey&ckey=@Model.StartKey&table=@Model.Table&maxrows=@Model.MaxRows">&#8666; Start</a>&nbsp;&nbsp;&nbsp;
+    @EndIf
+
+    @If.HasNextLink
+        <a href="/big/data/list?skey=@Model.StartKey&ekey=@Model.EndKey&ckey=@Model.NextKey&table=@Model.Table&maxrows=@Model.MaxRows">Next &#8658;</a>
+    @EndIf
+</div>
+@EndSection

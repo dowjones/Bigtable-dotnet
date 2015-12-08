@@ -1,0 +1,19 @@
+﻿<tr>
+    @If.HasKey
+        <td rowspan="@Model.KeyRowSpan">@Model.Key</td>
+    @EndIf
+
+    @If.HasFamily
+        <td rowspan="@Model.FamilyRowSpan">@Model.Family</td>
+    @EndIf
+
+    @If.HasColumn
+        <td rowspan="@Model.ColumnRowSpan">@Model.Column</td>
+    @EndIf
+
+    <td>@Model.Value</td>
+ 
+    @If.HasTimeStamp
+        <td rowspan="@Model.TimeStampRowSpan">@Model.TimeStamp</td>
+    @EndIf
+</tr>

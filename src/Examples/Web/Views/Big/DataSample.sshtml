@@ -1,0 +1,38 @@
+﻿@Master['Layout.sshtml']
+
+@Section['Content']
+<div>
+    <form action="/big/data/sample" method="GET">
+        @Partial['_TableSelect', Model.Tables]
+
+        <label for="max-rows">Max Rows:</label>
+        <input id="max-rows" type="text" name="maxrows" value="@Model.MaxRows" class="small-input">
+
+        <input type="submit" value="Go">
+    </form>
+</div>
+
+<div class="data">
+    <table class="paged">
+        @Partial['_DataListHeader']
+        <tbody>
+        @Each.Rows
+            @Partial['_DataListRow', Current]
+        @EndEach
+        </tbody>
+    </table>
+</div>
+
+<div class="data">
+    <table>
+        <thead>
+            <tr><th colspan="2">Stats</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>SampleElapsed</td><td>@Model.SampleElapsed</td></tr>
+            <tr><td>GetRowsElapsed</td><td>@Model.GetRowsElapsed</td></tr>
+            <tr><td>SampleCount</td><td>@Model.SampleCount</td></tr>
+        </tbody>
+    </table>
+</div>
+@EndSection
