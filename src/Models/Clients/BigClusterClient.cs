@@ -16,7 +16,7 @@ namespace BigtableNet.Models.Clients
     {
         private readonly BigtableClusterService.BigtableClusterServiceClient _client;
 
-        internal string ProjectUri { get; private set; }
+        internal string ProjectId { get; private set; }
 
 
         public BigClusterClient(BigtableCredentials credentials, string project, string zone, string cluster, bool isReadOnly) : this(credentials, new BigtableConfig(project, zone, cluster), isReadOnly)
@@ -32,7 +32,7 @@ namespace BigtableNet.Models.Clients
 
         public async Task<IEnumerable<BigCluster>> ListClustersAsync(Action<BigZone> failedZonesHandler = null)
         {
-            var request = new ListClustersRequest { Name = ProjectUri };
+            var request = new ListClustersRequest { Name = ProjectId };
             var response = await _client.ListClustersAsync(request);
             await Task.Yield();
 
@@ -49,7 +49,7 @@ namespace BigtableNet.Models.Clients
 
         public async Task<BigCluster> GetClusterAsync(string name)
         {
-            var request = new GetClusterRequest { Name = name.ToClusterUri(Config.ToZoneUri()) };
+            var request = new GetClusterRequest { Name = name.ToClusterId(Config.ToZoneId()) };
             var response = await _client.GetClusterAsync(request);
             await Task.Yield();
             return new BigCluster(this, response);
@@ -57,7 +57,7 @@ namespace BigtableNet.Models.Clients
 
         public async Task DeleteClusterAsync(string name)
         {
-            var request = new DeleteClusterRequest { Name = name.ToClusterUri(Config.ToZoneUri()) };
+            var request = new DeleteClusterRequest { Name = name.ToClusterId(Config.ToZoneId()) };
             await _client.DeleteClusterAsync(request);
             await Task.Yield();
         }
@@ -66,7 +66,7 @@ namespace BigtableNet.Models.Clients
         {
             var request = new CreateClusterRequest
             {
-                Name = Config.ToZoneUri(),
+                Name = Config.ToZoneId(),
                 ClusterId = name
             };
 
@@ -79,7 +79,7 @@ namespace BigtableNet.Models.Clients
 
         public async Task<IEnumerable<BigZone>> ListZonesAsync()
         {
-            var request = new ListZonesRequest { Name = ProjectUri };
+            var request = new ListZonesRequest { Name = ProjectId };
             var response = await _client.ListZonesAsync(request);
             await Task.Yield();
             return response.Zones.Select(zone => new BigZone(this, zone));

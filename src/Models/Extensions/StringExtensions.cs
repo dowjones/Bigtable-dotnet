@@ -12,19 +12,19 @@ namespace BigtableNet.Models.Extensions
 {
     public static class StringExtensions
     {
-        internal static string ToClusterUri(this string clusterName, string zoneUri)
+        internal static string ToClusterId(this string clusterName, string zoneId)
         {
-            return String.Format(BigtableConstants.Templates.Cluster, zoneUri, clusterName);
+            return String.Format(BigtableConstants.Templates.Cluster, zoneId, clusterName);
         }
 
-        internal static string ToTableUri(this string tableName, string clusterUri)
+        internal static string ToTableId(this string tableName, string clusterId)
         {
-            return String.Format(BigtableConstants.Templates.Table, clusterUri, tableName);
+            return String.Format(BigtableConstants.Templates.Table, clusterId, tableName);
         }
 
-        internal static string ToFamilyUri(this string familyName, string clusterUri, string tableName)
+        internal static string ToFamilyId(this string familyName, string clusterId, string tableName)
         {
-            return String.Format(BigtableConstants.Templates.Family, tableName.ToTableUri(clusterUri), familyName);
+            return String.Format(BigtableConstants.Templates.Family, tableName.ToTableId(clusterId), familyName);
         }
 
         public static ByteString ToByteString(this string value, Encoding encoding)

@@ -1,27 +1,21 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using BigtableNet.Common;
 using BigtableNet.Mapper.Implementation;
 using BigtableNet.Mapper.Interfaces;
-using BigtableNet.Mapper.Types;
-using BigtableNet.Models;
 using BigtableNet.Models.Clients;
-using BigtableNet.Models.Extensions;
 using BigtableNet.Models.Types;
-using Google.Apis.Auth.OAuth2;
 using Google.Bigtable.V1;
-using Google.Protobuf;
 
 namespace BigtableNet.Mapper
 {
+    /// <summary>
+    /// This class is under development
+    /// </summary>
     public class Bigtable : BigtableReader
     {
         public Bigtable(BigtableCredentials credentials, string project, string zone, string cluster) : this(credentials, new BigtableConfig(project, zone, cluster))

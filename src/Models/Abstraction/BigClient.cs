@@ -15,7 +15,7 @@ namespace BigtableNet.Models.Abstraction
         protected readonly Channel Channel;
         protected Func<Channel> ChannelCreator;
 
-        internal string ClusterUri { get; private set; }
+        internal string ClusterId { get; private set; }
 
 
         public string Project { get { return Config.Project; } }
@@ -29,7 +29,7 @@ namespace BigtableNet.Models.Abstraction
             Config = config;
             Channel = channelCreator();
             ChannelCreator = channelCreator;
-            ClusterUri = config.ToClusterUri();
+            ClusterId = config.ToClusterId();
         }
 
 

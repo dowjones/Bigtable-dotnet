@@ -81,7 +81,7 @@ namespace BigtableNet.Models.Clients
 
             var request = new CreateTableRequest
             {
-                Name = ClusterUri,
+                Name = ClusterId,
                 TableId = name,
                 Table = new Table()
             };
@@ -104,7 +104,7 @@ namespace BigtableNet.Models.Clients
             request.Table.Granularity = Table.Types.TimestampGranularity.MILLIS;
             var response = await _client.CreateTableAsync(request);
             await Task.Yield();
-            return new BigTable(response, encoding, ClusterUri);
+            return new BigTable(response, encoding, ClusterId);
         }
 
         #endregion
@@ -119,10 +119,10 @@ namespace BigtableNet.Models.Clients
         public async Task<BigTable> GetTableAsync(string name, Encoding encoding = null)
         {
             encoding = encoding ?? BigModel.DefaultEncoding;
-            var request = new GetTableRequest { Name = name.ToTableUri(ClusterUri) };
+            var request = new GetTableRequest { Name = name.ToTableId(ClusterId) };
             var response = await _client.GetTableAsync(request);
             await Task.Yield();
-            return new BigTable(response, encoding, ClusterUri);
+            return new BigTable(response, encoding, ClusterId);
         }
 
         #endregion
@@ -136,10 +136,10 @@ namespace BigtableNet.Models.Clients
         public async Task<IEnumerable<BigTable>> ListTablesAsync( Encoding encoding = null )
         {
             encoding = encoding ?? BigModel.DefaultEncoding;
-            var request = new ListTablesRequest { Name = ClusterUri };
+            var request = new ListTablesRequest { Name = ClusterId };
             var response = await _client.ListTablesAsync(request);
             await Task.Yield();
-            var results = response.Tables.Select(table => new BigTable(table, encoding, ClusterUri));
+            var results = response.Tables.Select(table => new BigTable(table, encoding, ClusterId));
             return results.ToArray();
         }
 
@@ -155,7 +155,7 @@ namespace BigtableNet.Models.Clients
 
         public async Task DeleteTableAsync(string tableName)
         {
-            var request = new DeleteTableRequest {Name = tableName.ToTableUri(ClusterUri)};
+            var request = new DeleteTableRequest {Name = tableName.ToTableId(ClusterId)};
             await _client.DeleteTableAsync(request);
             await Task.Yield();
         }
@@ -171,7 +171,7 @@ namespace BigtableNet.Models.Clients
         }
         public async Task RenameTableAsync(string tableName, string name)
         {
-            var request = new RenameTableRequest {Name = tableName.ToTableUri(ClusterUri), NewId = name };
+            var request = new RenameTableRequest {Name = tableName.ToTableId(ClusterId), NewId = name };
             await _client.RenameTableAsync(request);
             await Task.Yield();
         }
@@ -187,17 +187,17 @@ namespace BigtableNet.Models.Clients
 
         public async Task<BigFamily> CreateFamilyAsync(string tableName, string name, RetentionPolicy policy)
         {
-            var tableUri = tableName.ToTableUri(ClusterUri);
+            var tableId = tableName.ToTableId(ClusterId);
             var request = new CreateColumnFamilyRequest
             {
-                Name = tableUri,
+                Name = tableId,
                 ColumnFamilyId = name,
                 ColumnFamily = policy.ToColumnFamilyPrototype()
             };
 
             var response = await _client.CreateColumnFamilyAsync(request);
             await Task.Yield();
-            return new BigFamily(response, tableUri);
+            return new BigFamily(response, tableId);
         }
 
         #endregion
@@ -217,10 +217,10 @@ namespace BigtableNet.Models.Clients
         public async Task<BigFamily> UpdateFamilyAsync(string tableName, string familyName, RetentionPolicy policy)
         {
             var columnFamily = policy.ToColumnFamilyPrototype();
-            columnFamily.Name = familyName.ToFamilyUri(ClusterUri, tableName);
+            columnFamily.Name = familyName.ToFamilyId(ClusterId, tableName);
             var response = await _client.UpdateColumnFamilyAsync(columnFamily);
             await Task.Yield();
-            return new BigFamily(response, tableName.ToTableUri(ClusterUri));
+            return new BigFamily(response, tableName.ToTableId(ClusterId));
         }
 
         #endregion
@@ -241,7 +241,7 @@ namespace BigtableNet.Models.Clients
         {
             var request = new DeleteColumnFamilyRequest
             {
-                Name = familyName.ToFamilyUri(ClusterUri, tableName)
+                Name = familyName.ToFamilyId(ClusterId, tableName)
             };
 
             await _client.DeleteColumnFamilyAsync(request);

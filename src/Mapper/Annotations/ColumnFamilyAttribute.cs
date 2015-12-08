@@ -1,13 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Policy;
-using System.Text;
-using System.Threading.Tasks;
-using BigtableNet.Common;
 using BigtableNet.Mapper.Abstraction;
 using BigtableNet.Models.Abstraction;
-using BigtableNet.Models.Clients;
 using BigtableNet.Models.Interfaces;
 using BigtableNet.Models.Types;
 

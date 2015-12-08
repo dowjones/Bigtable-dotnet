@@ -1,9 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace BigtableNet.Common.Implementation
 {
+    /// <summary>
+    /// The observable implementation is not in a stable state and should not be used
+    /// </summary>
+    /// <typeparam name="TStream"></typeparam>
+    /// <typeparam name="TData"></typeparam>
     public class Observable<TStream, TData> : IObservable<TData> 
         where TData : class
     {

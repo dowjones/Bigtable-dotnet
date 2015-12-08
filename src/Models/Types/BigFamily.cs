@@ -18,9 +18,9 @@ namespace BigtableNet.Models.Types
     {
         public RetentionPolicy RetentionPolicy { get; private set; }
 
-        internal BigFamily(ColumnFamily family, string tableUri )
+        internal BigFamily(ColumnFamily family, string tableId )
         {
-            var prefix = tableUri + BigtableConstants.Templates.FamilyAdjunct;
+            var prefix = tableId + BigtableConstants.Templates.FamilyAdjunct;
             Name = family.Name.Replace(prefix, "");
             RetentionPolicy = new RetentionPolicy(family.GcRule, family.GcExpression);
         }

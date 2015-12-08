@@ -1,9 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace BigtableNet.Common.Implementation
 {
+    /// <summary>
+    /// The observable implementation is not in a stable state and should not be used
+    /// </summary>
+    /// <typeparam name="TStream"></typeparam>
+    /// <typeparam name="TData"></typeparam>
+    /// <typeparam name="T"></typeparam>
     public class ChainedObservable<TStream, TData, T> : IObservable<T>
         where TData : class
         where T : class

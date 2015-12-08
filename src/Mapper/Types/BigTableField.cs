@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using BigtableNet.Common.Extensions;
 using BigtableNet.Mapper.Interfaces;
 
 namespace BigtableNet.Mapper.Types

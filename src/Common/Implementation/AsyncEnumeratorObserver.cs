@@ -1,11 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.SqlTypes;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace BigtableNet.Common.Implementation
 {
+    /// <summary>
+    /// The observable implementation is not in a stable state and should not be used
+    /// </summary>
+    /// <typeparam name="TStream"></typeparam>
+    /// <typeparam name="TData"></typeparam>
     public class AsyncEnumeratorObserver<TStream, TData> : IDisposable
         where TData : class
     {

@@ -28,7 +28,7 @@ namespace Examples.LowLevel
     /// </summary>
     public class SimpleClient : IDisposable
     {
-        private readonly string _bigTable;
+        private readonly string _bigTableId;
         private readonly string _pemFile;
 
         private Channel _channel;
@@ -44,9 +44,9 @@ namespace Examples.LowLevel
             var path = Directory.GetParent(Process.GetCurrentProcess().MainModule.FileName);
             _pemFile = Path.Combine(path.ToString(), "google-bigtable.pem" );
             Console.WriteLine("Using pem file: " + _pemFile);
-            var projectUri = String.Format(BigtableConstants.Templates.Project, project);
-            var zoneUri = String.Format(BigtableConstants.Templates.Zone, projectUri, zone);
-            _bigTable = String.Format(BigtableConstants.Templates.Cluster, zoneUri, cluster);
+            var projectId = String.Format(BigtableConstants.Templates.Project, project);
+            var zoneId = String.Format(BigtableConstants.Templates.Zone, projectId, zone);
+            _bigTableId = String.Format(BigtableConstants.Templates.Cluster, zoneId, cluster);
             Console.WriteLine("Client created for {0} in zone {1}, in the {2} cluster", project, zone, cluster);
         }
 
@@ -106,7 +106,7 @@ namespace Examples.LowLevel
                 return await new TimedOperation<IEnumerable<string>>().MeasureAsync(async () =>
                 {
                     var service = new BigtableTableService.BigtableTableServiceClient(_channel);
-                    var request = new ListTablesRequest { Name = _bigTable };
+                    var request = new ListTablesRequest { Name = _bigTableId };
                     var response = await service.ListTablesAsync(request);
                     return response.Tables.Select(DeconstructTableResource);
                 });
@@ -194,12 +194,12 @@ namespace Examples.LowLevel
 
         private string ConstructTableResource(string tableName)
         {
-            return String.Concat(_bigTable, BigtableConstants.Templates.TableAdjunct, tableName);
+            return String.Concat(_bigTableId, BigtableConstants.Templates.TableAdjunct, tableName);
         }
 
         private string DeconstructTableResource(Table table)
         {
-            return table.Name.Replace(_bigTable + BigtableConstants.Templates.TableAdjunct, "");
+            return table.Name.Replace(_bigTableId + BigtableConstants.Templates.TableAdjunct, "");
         }
 
         private static void ReportServiceFault(Exception exception)

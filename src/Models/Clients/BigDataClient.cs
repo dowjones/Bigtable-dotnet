@@ -102,7 +102,7 @@ namespace BigtableNet.Models.Clients
             // Create request
             var request = new ReadRowsRequest
             {
-                TableName = tableName.ToTableUri(ClusterUri),
+                TableName = tableName.ToTableId(ClusterId),
                 RowKey = key.ToByteString(encoding)
             };
 
@@ -119,7 +119,7 @@ namespace BigtableNet.Models.Clients
             // Create request
             var request = new ReadRowsRequest
             {
-                TableName = tableName.ToTableUri(ClusterUri),
+                TableName = tableName.ToTableId(ClusterId),
                 RowKey = key.ToByteString(),
             };
 
@@ -150,7 +150,7 @@ namespace BigtableNet.Models.Clients
             // Create request
             var request = new ReadRowsRequest
             {
-                TableName = tableName.ToTableUri(ClusterUri),
+                TableName = tableName.ToTableId(ClusterId),
                 NumRowsLimit = rowLimit,
                 RowRange = new RowRange
                 {
@@ -172,7 +172,7 @@ namespace BigtableNet.Models.Clients
             // Create request
             var request = new ReadRowsRequest
             {
-                TableName = tableName.ToTableUri(ClusterUri),
+                TableName = tableName.ToTableId(ClusterId),
                 NumRowsLimit = rowLimit,
                 RowRange = new RowRange
                 {
@@ -199,7 +199,7 @@ namespace BigtableNet.Models.Clients
             // Create request
             var request = new ReadRowsRequest
             {
-                TableName = tableName.ToTableUri(ClusterUri),
+                TableName = tableName.ToTableId(ClusterId),
                 NumRowsLimit = rowLimit,
                 Filter = filter,
             };
@@ -223,7 +223,7 @@ namespace BigtableNet.Models.Clients
 
             var request = new ReadRowsRequest
             {
-                TableName = tableName.ToTableUri(ClusterUri),
+                TableName = tableName.ToTableId(ClusterId),
                 AllowRowInterleaving = true,
                 RowRange = new RowRange
                 {
@@ -246,7 +246,7 @@ namespace BigtableNet.Models.Clients
 
             var request = new ReadRowsRequest
             {
-                TableName = tableName.ToTableUri(ClusterUri),
+                TableName = tableName.ToTableId(ClusterId),
                 AllowRowInterleaving = true,
                 RowRange = new RowRange
                 {
@@ -270,7 +270,7 @@ namespace BigtableNet.Models.Clients
 
             var request = new ReadRowsRequest
             {
-                TableName = tableName.ToTableUri(ClusterUri),
+                TableName = tableName.ToTableId(ClusterId),
                 AllowRowInterleaving = true,
                 Filter = filter,
             };
@@ -301,7 +301,7 @@ namespace BigtableNet.Models.Clients
         {
             var request = new SampleRowKeysRequest
             {
-                TableName = tableName.ToTableUri(ClusterUri)
+                TableName = tableName.ToTableId(ClusterId)
             };
             var response = _client.SampleRowKeys(request, cancellationToken: cancellationToken);
             await response.ResponseHeadersAsync;
@@ -333,7 +333,7 @@ namespace BigtableNet.Models.Clients
             // Chain
             var result = await BigRowObservable(table, cancellationToken, new ReadRowsRequest
             {
-                TableName = table.Name.ToTableUri(ClusterUri),
+                TableName = table.Name.ToTableId(ClusterId),
                 NumRowsLimit = rowLimit,
                 RowRange = new RowRange
                 {
@@ -354,7 +354,7 @@ namespace BigtableNet.Models.Clients
             // Chain
             var result = await BigRowObservable(table, cancellationToken, new ReadRowsRequest
             {
-                TableName = table.Name.ToTableUri(ClusterUri),
+                TableName = table.Name.ToTableId(ClusterId),
                 NumRowsLimit = rowLimit,
                 RowRange = new RowRange
                 {
@@ -375,7 +375,7 @@ namespace BigtableNet.Models.Clients
             // Chain
             var result = await BigRowObservable(table, cancellationToken, new ReadRowsRequest
             {
-                TableName = table.Name.ToTableUri(ClusterUri),
+                TableName = table.Name.ToTableId(ClusterId),
                 NumRowsLimit = rowLimit,
                 Filter = filter
             });
@@ -399,7 +399,7 @@ namespace BigtableNet.Models.Clients
 
             var result = await BigRowObservable(table, cancellationToken, new ReadRowsRequest
             {
-                TableName = table.Name.ToTableUri(ClusterUri),
+                TableName = table.Name.ToTableId(ClusterId),
                 AllowRowInterleaving = true,
                 RowRange = new RowRange
                 {
@@ -418,7 +418,7 @@ namespace BigtableNet.Models.Clients
 
             var result = await BigRowObservable(table, cancellationToken, new ReadRowsRequest
             {
-                TableName = table.Name.ToTableUri(ClusterUri),
+                TableName = table.Name.ToTableId(ClusterId),
                 AllowRowInterleaving = true,
                 RowRange = new RowRange
                 {
@@ -437,7 +437,7 @@ namespace BigtableNet.Models.Clients
 
             var result = await BigRowObservable(table, cancellationToken, new ReadRowsRequest
             {
-                TableName = table.Name.ToTableUri(ClusterUri),
+                TableName = table.Name.ToTableId(ClusterId),
                 AllowRowInterleaving = true,
                 Filter = filter
             });
@@ -459,7 +459,7 @@ namespace BigtableNet.Models.Clients
 
             var request = new SampleRowKeysRequest
             {
-                TableName = table.Name.ToTableUri(ClusterUri)
+                TableName = table.Name.ToTableId(ClusterId)
             };
 
             // Create new channel (see tech notes)
@@ -502,7 +502,7 @@ namespace BigtableNet.Models.Clients
             var request = new MutateRowRequest
             {
                 RowKey = key.ToByteString(encoding ?? BigModel.DefaultEncoding),
-                TableName = tableName.ToTableUri(ClusterUri),
+                TableName = tableName.ToTableId(ClusterId),
                 Mutations = { changes.Select(change => change.AsApiObject()) }
             };
             await _client.MutateRowAsync(request, cancellationToken: cancellationToken);
@@ -516,7 +516,7 @@ namespace BigtableNet.Models.Clients
             var request = new MutateRowRequest
             {
                 RowKey = key.ToByteString(),
-                TableName = tableName.ToTableUri(ClusterUri),
+                TableName = tableName.ToTableId(ClusterId),
                 Mutations = { changes.Select(change => change.AsApiObject()) }
             };
             await _client.MutateRowAsync(request, cancellationToken: cancellationToken);
@@ -564,7 +564,7 @@ namespace BigtableNet.Models.Clients
             var request = new ReadModifyWriteRowRequest
             {
                 RowKey = key.ToByteString(encoding),
-                TableName = tableName.ToTableUri(ClusterUri),
+                TableName = tableName.ToTableId(ClusterId),
                 Rules = { changes.Select(change => change.AsApiObject()) }
             };
             var response = await _client.ReadModifyWriteRowAsync(request, cancellationToken: cancellationToken);
@@ -585,7 +585,7 @@ namespace BigtableNet.Models.Clients
             var request = new ReadModifyWriteRowRequest
             {
                 RowKey = key.ToByteString(),
-                TableName = tableName.ToTableUri(ClusterUri),
+                TableName = tableName.ToTableId(ClusterId),
                 Rules = {changes.Select(change => change.AsApiObject())}
             };
             var response = await _client.ReadModifyWriteRowAsync(request, cancellationToken: cancellationToken);
@@ -610,7 +610,7 @@ namespace BigtableNet.Models.Clients
             var request = new CheckAndMutateRowRequest
             {
                 RowKey = key.ToByteString(encoding),
-                TableName = tableName.ToTableUri(ClusterUri),
+                TableName = tableName.ToTableId(ClusterId),
                 PredicateFilter = filter,
                 TrueMutations = {whenFilterIsTrue},
                 FalseMutations = {whenFilterIsFalse}
@@ -633,7 +633,7 @@ namespace BigtableNet.Models.Clients
             var request = new CheckAndMutateRowRequest
             {
                 RowKey = key.ToByteString(),
-                TableName = tableName.ToTableUri(ClusterUri),
+                TableName = tableName.ToTableId(ClusterId),
                 PredicateFilter = filter,
                 TrueMutations = { whenFilterIsTrue },
                 FalseMutations = { whenFilterIsFalse }

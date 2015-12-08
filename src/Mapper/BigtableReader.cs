@@ -1,23 +1,28 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using BigtableNet.Common;
 using BigtableNet.Common.Implementation;
 using BigtableNet.Mapper.Implementation;
 using BigtableNet.Mapper.Interfaces;
-using BigtableNet.Models;
 using BigtableNet.Models.Clients;
+using BigtableNet.Models.Extensions;
 using BigtableNet.Models.Types;
-using Google.Apis.Auth.OAuth2;
 using Google.Bigtable.V1;
+using Google.Protobuf;
+using Google.Protobuf.Collections;
 
 namespace BigtableNet.Mapper
 {
+    /// <summary>
+    /// This class is under development
+    /// </summary>
     public class BigtableReader : IDisposable
     {
         internal static ConcurrentBag<IBigtableFieldSerializer> FieldSerializers = new ConcurrentBag<IBigtableFieldSerializer>();
@@ -57,6 +62,16 @@ namespace BigtableNet.Mapper
             return false;
         }
 
+        public async Task<T> GetFirstRowAsync<T>(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var cache = ReflectionCache.For<T>();
+            var table = LocateTable<T>(cache);
+            var emptyKey= new byte[] { };
+            var result = await DataClient.Value.GetRowsAsync(table, emptyKey, emptyKey, 1, cancellationToken);
+            return result.Select(Inflate<T>).FirstOrDefault();
+        }
+
+
         public async Task<T> GetAsync<T>(T prototype, CancellationToken cancellationToken = default(CancellationToken))
         {
             var cache = ReflectionCache.For<T>();
@@ -66,7 +81,7 @@ namespace BigtableNet.Mapper
             return Inflate(row, prototype);
         }
 
-        public async Task<IEnumerable<T>> SampleAsync<T>(CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<IEnumerable<T>> SampleAsync<T>(System.Threading.CancellationToken cancellationToken = default(CancellationToken))
         {
             var cache = ReflectionCache.For<T>();
             var table = LocateTable<T>(cache);

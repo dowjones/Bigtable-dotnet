@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Text;
 using BigtableNet.Models.Abstraction;
-using BigtableNet.Models.Clients;
 
 namespace BigtableNet.Mapper.Annotations
 {

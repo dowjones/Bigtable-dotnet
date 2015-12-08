@@ -4,7 +4,7 @@ namespace BigtableNet.Common.Extensions
 {
     public static class BigtableConfigExtensions
     {
-        public static string ToProjectUri(this BigtableConfig config)
+        public static string ToProjectId(this BigtableConfig config)
         {
             if (String.IsNullOrEmpty(config.Cluster))
             {
@@ -14,24 +14,24 @@ namespace BigtableNet.Common.Extensions
             return String.Format(BigtableConstants.Templates.Project, config.Project);
         }
 
-        public static string ToZoneUri(this BigtableConfig config)
+        public static string ToZoneId(this BigtableConfig config)
         {
             if (String.IsNullOrEmpty(config.Zone))
             {
-                return config.ToProjectUri();
+                return config.ToProjectId();
             }
 
-            return String.Format(BigtableConstants.Templates.Zone, config.ToProjectUri(), config.Zone);
+            return String.Format(BigtableConstants.Templates.Zone, config.ToProjectId(), config.Zone);
         }
 
-        public static string ToClusterUri(this BigtableConfig config)
+        public static string ToClusterId(this BigtableConfig config)
         {
             if (String.IsNullOrEmpty(config.Cluster))
             {
-                return config.ToZoneUri();
+                return config.ToZoneId();
             }
 
-            return String.Format(BigtableConstants.Templates.Cluster, config.ToZoneUri(), config.Cluster);
+            return String.Format(BigtableConstants.Templates.Cluster, config.ToZoneId(), config.Cluster);
         }
     }
 }
