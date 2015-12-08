@@ -68,6 +68,8 @@ namespace BigtableNet.Common.Implementation
             if (!_isComplete && !IsCancelled)
             {
                 _isComplete = true;
+
+                // TODO: Should this actually fire OnCompleted
                 _observer.OnCompleted();
             }
         }

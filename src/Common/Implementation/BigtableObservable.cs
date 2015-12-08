@@ -8,7 +8,7 @@ namespace BigtableNet.Common.Implementation
     /// </summary>
     /// <typeparam name="TStream"></typeparam>
     /// <typeparam name="TData"></typeparam>
-    public class Observable<TStream, TData> : IObservable<TData> 
+    public class BigtableObservable<TStream, TData> : IObservable<TData> 
         where TData : class
     {
         internal IDisposable Disposable { get; private set; }
@@ -17,7 +17,7 @@ namespace BigtableNet.Common.Implementation
 
         internal Func<TStream, TData> Converter { get; private set; }
 
-        public Observable(IDisposable disposable, IAsyncEnumerator<TStream> stream, Func<TStream, TData> converter)
+        public BigtableObservable(IDisposable disposable, IAsyncEnumerator<TStream> stream, Func<TStream, TData> converter)
         {
             Disposable = disposable;
             Converter = converter;

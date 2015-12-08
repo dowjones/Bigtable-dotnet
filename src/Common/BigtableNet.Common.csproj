@@ -101,8 +101,7 @@
     <Compile Include="Customization\ReconfigureGrpc.cs" />
     <Compile Include="Customization\GrpcLoggingAdaptor.cs" />
     <Compile Include="Implementation\AsyncEnumeratorObserver.cs" />
-    <Compile Include="Implementation\ChainedObservable.cs" />
-    <Compile Include="Implementation\Observable.cs" />
+    <Compile Include="Implementation\BigtableObservable.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SerializationResolvers\DashContractResolver.cs" />
     <Compile Include="ProductInfo.cs" />

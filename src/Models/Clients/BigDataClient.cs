@@ -473,7 +473,7 @@ namespace BigtableNet.Models.Clients
 
             await Task.Yield();
 
-            return new Observable<SampleRowKeysResponse, BigRow.Sample>(clone, response.ResponseStream, row => new BigRow.Sample(table, row.RowKey, row.OffsetBytes));
+            return new BigtableObservable<SampleRowKeysResponse, BigRow.Sample>(clone, response.ResponseStream, row => new BigRow.Sample(table, row.RowKey, row.OffsetBytes));
         }
 
         #endregion
@@ -659,9 +659,9 @@ namespace BigtableNet.Models.Clients
 
             // Send read rows request
             var response = await clone.ReadRows(request, cancellationToken);
-
+            
             // Return an observable for response
-            return new Observable<ReadRowsResponse, BigRow>(clone, response, row => new BigRow(table, row));
+            return new BigtableObservable<ReadRowsResponse, BigRow>(clone, response, row => new BigRow(table, row));
         }
 
         // Used by single row

@@ -88,7 +88,7 @@ http://localhost:8913/big/data/sample?table=myTable&maxrows=10
 
 This solution can be loaded in Microsoft Visual Studio 2013 or 2015.  It is .NET 4.5, C# 5.
 
-After cloning this repository, you can either follow the directions in the [Installation Guide](doc/Installation.md#installation-guide) to get the gRPC submodule packages setup or work around this step by running ```scripts\copy-dependency-packages``` from the root folder of the repository.
+After cloning this repository, you can either follow the directions in the [Installation Guide](doc/Installation.md#installation-guide) to get the gRPC submodule packages setup or work around this step by running downloading the [submodule packages](http://dowjones.github.io/Bigtable-dotnet/) and extracting in the root of the repository directory ("Extract Here").
 
 
 Before proceeding, *remember that Bigtable is not a free product*, and this sample will add data to your cluster!  While it will not add much data, **by using these examples you accept all liability for the charges you incur while using Bigtable!**  At the time this was written, Google was offering a free 30-day trial to new subscribers.

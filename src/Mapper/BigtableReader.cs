@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive.Linq;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
@@ -106,7 +107,7 @@ namespace BigtableNet.Mapper
             var startKey = ExtractKey(cache,start);
             var endKey = ExtractKey(cache,end);
             var observable = await DataClient.Value.ObserveRowsAsync(table, startKey, endKey, rowLimit, cancellationToken);
-            return new ChainedObservable<ReadRowsResponse, BigRow, T>((Observable<ReadRowsResponse, BigRow>)observable, Inflate<T>);
+            return observable.Select(Inflate<T>);
         }
 
         public async Task<IEnumerable<T>> UnsortedScanAsync<T>(T start = default(T), T end = default(T), CancellationToken cancellationToken = default(CancellationToken))
@@ -126,7 +127,7 @@ namespace BigtableNet.Mapper
             var startKey = ExtractKey(cache,start);
             var endKey = ExtractKey(cache,end);
             var observable = await DataClient.Value.ObserveUnsortedRowsAsync(table, startKey, endKey, cancellationToken);
-            return new ChainedObservable<ReadRowsResponse, BigRow, T>((Observable<ReadRowsResponse, BigRow>)observable, Inflate<T>);
+            return observable.Select(Inflate<T>);
         }
 
 
