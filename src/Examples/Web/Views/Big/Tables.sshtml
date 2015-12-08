@@ -1,0 +1,26 @@
+﻿@Master['Layout.sshtml']
+
+@Section['Content']
+<div class="data">
+    <table>
+        <thead>
+            <tr><th colspan="2">Tables</th></tr>
+            <tr>
+                <th>Name</th>
+                <th>Links</th>
+            </tr>
+        </thead>
+        <tbody>
+        @Each.Tables
+            <tr>
+                <td>@Current.Name</td>
+                <td>
+                    <a href="/big/data/list?table=@Current.Name">List</a>
+                    <a href="/big/data/sample?table=@Current.Name">Sample</a>
+                </td>
+            </tr>
+        @EndEach
+        </tbody>
+    </table>
+</div>
+@EndSection

@@ -122,6 +122,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Examples.Mapped", "Examples
 		{2D35D267-BE90-4C0E-9F2D-47CE31BAF3BD} = {2D35D267-BE90-4C0E-9F2D-47CE31BAF3BD}
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Examples.Web", "Examples\Web\Examples.Web.csproj", "{EFDC4FAD-9CC7-465A-A1DB-C4CD17B9B4EF}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Examples.Bootstrap", "Examples\Bootstrap\Examples.Bootstrap.csproj", "{2D35D267-BE90-4C0E-9F2D-47CE31BAF3BD}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{070F4834-E999-453F-8685-C02888F36BC8}"

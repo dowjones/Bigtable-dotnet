@@ -1,0 +1,11 @@
+﻿
+<label for="table-name">Table:</label>
+<select name="table">
+  @Each
+    <option value="@Current.Name"
+            @If.IsSelected
+            selected
+            @EndIf
+            >@Current.Name</option>
+  @EndEach
+</select>

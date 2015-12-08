@@ -1,0 +1,14 @@
+﻿
+<ul>
+    <li><a href="/">Home</a></li>
+</ul>
+
+<ul>
+    <li><a href="/big/tables">Tables</a></li>
+    <li><a href="/big/data/list">Data (list)</a></li>
+    <li><a href="/big/data/sample">Data (sample)</a></li>
+</ul>
+
+<ul>
+    <li><a href="/about">About</a></li>
+</ul>

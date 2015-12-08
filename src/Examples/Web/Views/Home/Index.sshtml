@@ -1,0 +1,5 @@
+﻿@Master['Layout.sshtml']
+
+@Section['Content']
+<p>Coming Soon!</p>
+@EndSection
