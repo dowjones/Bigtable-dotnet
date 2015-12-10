@@ -31,6 +31,7 @@ namespace Examples.Modeled
                 // Create credentials
                 var credentials = await BigtableCredentials.UseApplicationDefaultCredentialsAsync();
 
+                if( false) 
                 // Admin client
                 using (var adminClient = new BigAdminClient(credentials, config))
                 {
@@ -61,13 +62,13 @@ namespace Examples.Modeled
                     var pricingTable = new BigTable(Constants.PricingTable);
 
                     // Scan pricing table
-                    var pricing = await dataClient.GetRowsAsync(pricingTable, Constants.ScanKeyStart, Constants.ScanKeyEnd, Constants.ScanLimit);
+                    //var pricing = await dataClient.GetRowsAsync(pricingTable, Constants.ScanKeyStart, Constants.ScanKeyEnd, Constants.ScanLimit);
 
-                    // Show the user
-                    CommandLine.DisplayRows(pricing);
+                    //// Show the user
+                    //CommandLine.DisplayRows(pricing);
 
-                    // Wait for keypress
-                    CommandLine.WaitForUserAndThen("observe rows");
+                    //// Wait for keypress
+                    //CommandLine.WaitForUserAndThen("observe rows");
 
                     // Test observables
                     var waitSource = new CancellationTokenSource();
@@ -76,9 +77,10 @@ namespace Examples.Modeled
                     // Create a subscriber
                     var subscriber = new TestSubscriber(()=>waitSource.Cancel());
                     // ReSharper disable once MethodSupportsCancellation
-                    var observable = await dataClient.ObserveRowsAsync(pricingTable, Constants.ScanKeyStart, Constants.ScanKeyEnd, Constants.ScanLimit);
+                    var observable = dataClient.ObserveRows(pricingTable, Constants.ScanKeyStart, Constants.ScanKeyEnd, Constants.ScanLimit);
                     using (observable.Subscribe(subscriber))
                     {
+                        //await Task.Delay(1000);
                         Task.WaitAny(waitForObservation);
                     }
 
@@ -89,7 +91,7 @@ namespace Examples.Modeled
                     var row = await dataClient.GetRowAsync(pricingTable, Constants.SeekKey);
 
                     // Show the user
-                    CommandLine.DisplayRows(new[] { row });
+                    CommandLine.DisplayRows(new[] {row});
                 }
             }
             catch (Exception exception)

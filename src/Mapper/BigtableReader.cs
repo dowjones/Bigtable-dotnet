@@ -82,7 +82,7 @@ namespace BigtableNet.Mapper
             return Inflate(row, prototype);
         }
 
-        public async Task<IEnumerable<T>> SampleAsync<T>(System.Threading.CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<IEnumerable<T>> SampleAsync<T>(CancellationToken cancellationToken = default(CancellationToken))
         {
             var cache = ReflectionCache.For<T>();
             var table = LocateTable<T>(cache);
@@ -99,14 +99,14 @@ namespace BigtableNet.Mapper
             var rows = await DataClient.Value.GetRowsAsync(table, startKey, endKey, rowLimit, cancellationToken);
             return rows.AsParallel().Select(Inflate<T>).ToArray();
         }
-        public async Task<IObservable<T>> ObservableScanAsync<T>(T start = default(T), T end = default(T), int rowLimit = 0, CancellationToken cancellationToken = default(CancellationToken))
+        public IObservable<T> ObservableScan<T>(T start = default(T), T end = default(T), int rowLimit = 0)
             where T : class
         {
             var cache = ReflectionCache.For<T>();
             var table = LocateTable<T>(cache);
             var startKey = ExtractKey(cache,start);
             var endKey = ExtractKey(cache,end);
-            var observable = await DataClient.Value.ObserveRowsAsync(table, startKey, endKey, rowLimit, cancellationToken);
+            var observable = DataClient.Value.ObserveRows(table, startKey, endKey, rowLimit);
             return observable.Select(Inflate<T>);
         }
 
@@ -119,14 +119,14 @@ namespace BigtableNet.Mapper
             var rows = await DataClient.Value.GetUnsortedRowsAsync(table, startKey, endKey, cancellationToken);
             return rows.AsParallel().Select(Inflate<T>).ToArray();
         }
-        public async Task<IObservable<T>> UnsortedObservableScanAsync<T>(T start = default(T), T end = default(T), CancellationToken cancellationToken = default(CancellationToken))
+        public IObservable<T> ObservableUnsortedScan<T>(T start = default(T), T end = default(T))
             where T : class
         {
             var cache = ReflectionCache.For<T>();
             var table = LocateTable<T>(cache);
             var startKey = ExtractKey(cache,start);
             var endKey = ExtractKey(cache,end);
-            var observable = await DataClient.Value.ObserveUnsortedRowsAsync(table, startKey, endKey, cancellationToken);
+            var observable = DataClient.Value.ObserveUnsortedRows(table, startKey, endKey);
             return observable.Select(Inflate<T>);
         }
 

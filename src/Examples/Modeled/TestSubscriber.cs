@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using BigtableNet.Models.Types;
 using Examples.Bootstrap;
@@ -32,6 +33,7 @@ namespace Examples.Modeled
 
         public void OnNext(BigRow value)
         {
+            Console.WriteLine(Thread.CurrentThread.ManagedThreadId);
             CommandLine.DisplayRows( new[] { value } );
         }
     }

@@ -325,13 +325,9 @@ namespace BigtableNet.Models.Clients
 
         #region - Observe Rows Signatures -
 
-        public async Task<IObservable<BigRow>> ObserveRowsAsync(BigTable table, string startKey = "", string endKey = "", long rowLimit = 0, CancellationToken cancellationToken = default(CancellationToken))
+        public IObservable<BigRow> ObserveRows(BigTable table, string startKey = "", string endKey = "", long rowLimit = 0)
         {
-            // Defaultable parameters
-            cancellationToken = cancellationToken == default(CancellationToken) ? CancellationToken.None : cancellationToken;
-
-            // Chain
-            var result = await BigRowObservable(table, cancellationToken, new ReadRowsRequest
+            return BigRowObservable(table, new ReadRowsRequest
             {
                 TableName = table.Name.ToTableId(ClusterId),
                 NumRowsLimit = rowLimit,
@@ -341,18 +337,11 @@ namespace BigtableNet.Models.Clients
                     EndKey = endKey.ToByteString(table.Encoding),
                 }
             });
-
-            await Task.Yield();
-            return result;
         }
 
-        public async Task<IObservable<BigRow>>  ObserveRowsAsync(BigTable table, byte[] startKey = null, byte[] endKey = null, long rowLimit = 0, CancellationToken cancellationToken = default(CancellationToken))
+        public IObservable<BigRow>  ObserveRows(BigTable table, byte[] startKey = null, byte[] endKey = null, long rowLimit = 0)
         {
-            // Defaultable parameters
-            cancellationToken = cancellationToken == default(CancellationToken) ? CancellationToken.None : cancellationToken;
-
-            // Chain
-            var result = await BigRowObservable(table, cancellationToken, new ReadRowsRequest
+            return BigRowObservable(table, new ReadRowsRequest
             {
                 TableName = table.Name.ToTableId(ClusterId),
                 NumRowsLimit = rowLimit,
@@ -362,42 +351,25 @@ namespace BigtableNet.Models.Clients
                     EndKey = endKey.ToByteString(),
                 }
             });
-
-            await Task.Yield();
-            return result;
         }
 
-        public async Task<IObservable<BigRow>> ObserveRowsAsync(BigTable table, RowFilter filter, long rowLimit = 0, CancellationToken cancellationToken = default(CancellationToken))
+        public IObservable<BigRow> ObserveRows(BigTable table, RowFilter filter, long rowLimit = 0)
         {
-            // Defaultable parameters
-            cancellationToken = cancellationToken == default(CancellationToken) ? CancellationToken.None : cancellationToken;
-
-            // Chain
-            var result = await BigRowObservable(table, cancellationToken, new ReadRowsRequest
+            return BigRowObservable(table, new ReadRowsRequest
             {
                 TableName = table.Name.ToTableId(ClusterId),
                 NumRowsLimit = rowLimit,
                 Filter = filter
             });
-
-            await Task.Yield();
-            return result;
-
         }
+
         #endregion
 
         #region - Observable Unsorted Rows Signatures -
 
-        //public async Task<IObservable<BigRow>> ObserveUnsortedRowsAsync(BigTable table, string startKey = "", string endKey = "", CancellationToken cancellationToken = default(CancellationToken))
-        //{
-        //    //await ObserveUnsortedRowsAsync(table.Name)
-        //}
-        //public async Task<IObservable<BigRow>> ObserveUnsortedRowsAsync(string tableName, string startKey = "", string endKey = "", Encoding encoding = null, CancellationToken cancellationToken = default(CancellationToken))
-        public async Task<IObservable<BigRow>> ObserveUnsortedRowsAsync(BigTable table, string startKey = "", string endKey = "", CancellationToken cancellationToken = default(CancellationToken))
+        public IObservable<BigRow> ObserveUnsortedRows(BigTable table, string startKey = "", string endKey = "")
         {
-            cancellationToken = cancellationToken == default(CancellationToken) ? CancellationToken.None : cancellationToken;
-
-            var result = await BigRowObservable(table, cancellationToken, new ReadRowsRequest
+            return BigRowObservable(table, new ReadRowsRequest
             {
                 TableName = table.Name.ToTableId(ClusterId),
                 AllowRowInterleaving = true,
@@ -407,16 +379,11 @@ namespace BigtableNet.Models.Clients
                     EndKey = endKey.ToByteString(table.Encoding),
                 }
             });
-
-            await Task.Yield();
-            return result;
         }
 
-        public async Task<IObservable<BigRow>> ObserveUnsortedRowsAsync(BigTable table, byte[] startKey = null, byte[] endKey = null, CancellationToken cancellationToken = default(CancellationToken))
+        public IObservable<BigRow> ObserveUnsortedRows(BigTable table, byte[] startKey = null, byte[] endKey = null)
         {
-            cancellationToken = cancellationToken == default(CancellationToken) ? CancellationToken.None : cancellationToken;
-
-            var result = await BigRowObservable(table, cancellationToken, new ReadRowsRequest
+            return BigRowObservable(table, new ReadRowsRequest
             {
                 TableName = table.Name.ToTableId(ClusterId),
                 AllowRowInterleaving = true,
@@ -426,54 +393,28 @@ namespace BigtableNet.Models.Clients
                     EndKey = (endKey ?? new byte[0]).ToByteString(),
                 }
             });
-
-            await Task.Yield();
-            return result;
         }
 
-        public async Task<IObservable<BigRow>> ObserveUnsortedRowsAsync(BigTable table, RowFilter filter, CancellationToken cancellationToken = default(CancellationToken))
+        public IObservable<BigRow> ObserveUnsortedRows(BigTable table, RowFilter filter)
         {
-            cancellationToken = cancellationToken == default(CancellationToken) ? CancellationToken.None : cancellationToken;
-
-            var result = await BigRowObservable(table, cancellationToken, new ReadRowsRequest
+            return BigRowObservable(table, new ReadRowsRequest
             {
                 TableName = table.Name.ToTableId(ClusterId),
                 AllowRowInterleaving = true,
                 Filter = filter
             });
-
-            await Task.Yield();
-            return result;
         }
 
-        /// <summary>
-        /// Observable methods return on the gRPC thread!
-        /// </summary>
-        /// <param name="table"></param>
-        /// <param name="cancellationToken"></param>
-        /// <param name="blockingSubscriber"></param>
-        /// <returns></returns>
-        public async Task<IObservable<BigRow.Sample>> ObserveSampleRowKeysAsync(BigTable table, CancellationToken cancellationToken, Action<IObservable<BigRow.Sample>> blockingSubscriber)
-        {
-            cancellationToken = cancellationToken == default(CancellationToken) ? CancellationToken.None : cancellationToken;
+        #endregion
 
-            var request = new SampleRowKeysRequest
+        #region - Observable Sample Row Keys Signatures -
+
+        public IObservable<BigRow.Sample> ObserveSampleRowKeys(BigTable table, CancellationToken cancellationToken, Action<IObservable<BigRow.Sample>> blockingSubscriber)
+        {
+            return BigRowSampleObservable(table, new SampleRowKeysRequest
             {
                 TableName = table.Name.ToTableId(ClusterId)
-            };
-
-            // Create new channel (see tech notes)
-            var clone = new BigDataClient(Config, ChannelCreator);
-
-            // Send read rows request
-            var response = _client.SampleRowKeys(request, cancellationToken: cancellationToken);
-
-            // Await initial response
-            await response.ResponseHeadersAsync;
-
-            await Task.Yield();
-
-            return new BigtableObservable<SampleRowKeysResponse, BigRow.Sample>(clone, response.ResponseStream, row => new BigRow.Sample(table, row.RowKey, row.OffsetBytes));
+            });
         }
 
         #endregion
@@ -652,16 +593,26 @@ namespace BigtableNet.Models.Clients
         #region - Private Functionality -
 
 
-        private async Task<IObservable<BigRow>> BigRowObservable(BigTable table, CancellationToken cancellationToken, ReadRowsRequest request)
+        private IObservable<BigRow> BigRowObservable(BigTable table, ReadRowsRequest request)
         {
-            // Create new channel (see tech notes)
-            var clone = new BigDataClient(Config, ChannelCreator);
-
-            // Send read rows request
-            var response = await clone.ReadRows(request, cancellationToken);
-            
             // Return an observable for response
-            return new BigtableObservable<ReadRowsResponse, BigRow>(clone, response, row => new BigRow(table, row));
+            return new BigtableObservable<ReadRowsResponse, BigRow>(async token => await ReadRows(request, token), row => new BigRow(table, row));
+        }
+
+        private IObservable<BigRow.Sample> BigRowSampleObservable(BigTable table, SampleRowKeysRequest request)
+        {
+            // Return an observable for response
+            return new BigtableObservable<SampleRowKeysResponse, BigRow.Sample>(async token =>
+            {
+                // Send read rows request
+                var response = _client.SampleRowKeys(request);
+
+                // Await initial response
+                await response.ResponseHeadersAsync;
+
+                return response.ResponseStream;
+
+            }, row => new BigRow.Sample(table, row.RowKey, row.OffsetBytes));
         }
 
         // Used by single row

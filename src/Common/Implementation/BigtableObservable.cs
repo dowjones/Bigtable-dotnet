@@ -1,5 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reactive;
+using System.Reactive.Concurrency;
+using System.Reactive.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace BigtableNet.Common.Implementation
 {
@@ -11,25 +16,60 @@ namespace BigtableNet.Common.Implementation
     public class BigtableObservable<TStream, TData> : IObservable<TData> 
         where TData : class
     {
-        internal IDisposable Disposable { get; private set; }
+        private readonly IObservable<TData> _observable;
+        private readonly Func<CancellationToken, Task<IAsyncEnumerator<TStream>>> _streamStarter;
+        private readonly Func<TStream, TData> _converter;
 
-        internal IAsyncEnumerator<TStream> Stream { get; private set; }
-
-        internal Func<TStream, TData> Converter { get; private set; }
-
-        public BigtableObservable(IDisposable disposable, IAsyncEnumerator<TStream> stream, Func<TStream, TData> converter)
+        public BigtableObservable(Func<CancellationToken,Task<IAsyncEnumerator<TStream>>> streamStarter, Func<TStream, TData> converter)
         {
-            Disposable = disposable;
-            Converter = converter;
-            Stream = stream;
+            _converter = converter;
+            _streamStarter = streamStarter;
+            _observable = Observable.Create<TData>(async (observer, token) => await Subscribe(observer,token));
         }
 
         public IDisposable Subscribe(IObserver<TData> observer)
         {
-            var result = new AsyncEnumeratorObserver<TStream, TData>(Stream, observer, Converter);
-            // Consider deleting
-            result.Observe();
-            return Disposable;
+            return _observable.Subscribe(observer);
+        }
+
+        private async Task Subscribe(IObserver<TData> observer, CancellationToken token)
+        {
+            try
+            {
+                // Start a new stream per observer
+                // This could be better, but for now I just need to 
+                // support a single subscriber
+                var stream = await _streamStarter(token);
+
+                using (var queue = new IsolatatingQueue<TData>(observer.OnNext))
+                {
+
+                    // Iterate stream
+                    while (await stream.MoveNext())
+                    {
+                        // Escape hatch, move next does support cancel even though it accepts it
+                        if (token.IsCancellationRequested)
+                        {
+                            return;
+                        }
+
+                        // Send current item to isolation queue
+                        queue.Enqueue(_converter(stream.Current));
+                    }
+
+                    // Wait for isolation queue to complete before destroying it
+                    await queue.Wait();
+                }
+
+                // Announce completion
+                observer.OnCompleted();
+            }
+            catch (Exception exception)
+            {
+                // Announce exception
+                observer.OnError(exception);
+            }
+            
         }
     }
 }
