@@ -152,14 +152,14 @@ namespace BigtableNet.Mapper
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected BigTable LocateTable<T>(ReflectionCache cache)
+        protected BigTable LocateTable<T>(ReflectionCache reflection)
         {
-            return cache.Adjunct( () => new BigTable(cache.TableName, cache.TableEncoding) );
+            return reflection.Adjunct( () => new BigTable(reflection.TableName, reflection.TableEncoding) );
         }
 
-        protected byte[] ExtractKey<T>(ReflectionCache cache, T instance)
+        protected byte[] ExtractKey<T>(ReflectionCache reflection, T instance)
         {
-            return cache.KeyGetter(instance);
+            return reflection.KeyGetter(instance);
         }
 
         public void Dispose()

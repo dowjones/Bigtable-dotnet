@@ -7,8 +7,8 @@ namespace BigtableNet.Mapper.Interfaces
     {
         bool CanHandleType(Type type);
 
-        byte[] SerializeField(object value, Encoding encoding);
+        byte[] SerializeField(Type type, object value, Encoding encoding);
 
-        object DeserializeField(byte[] keyBytes, Encoding encoding);
+        object DeserializeField(Type type, byte[] valueBytes, Encoding encoding);
     }
 }

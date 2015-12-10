@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using BigtableNet.Common;
@@ -34,7 +35,7 @@ namespace BigtableNet.Mapper
             var cache = ReflectionCache.For<T>();
             var table = LocateTable<T>(cache);
             var key = ExtractKey(cache, instance);
-            var changes = ExtractChanges(instance);
+            var changes = ExtractChanges(cache, instance);
             await DataClient.Value.WriteRowAsync(table, key, changes, cancellationToken);
         }
 
@@ -96,46 +97,46 @@ namespace BigtableNet.Mapper
 
 
 
-        private BigChange.FromRead CreateIncrementRule<T, TParameter>(ReflectionCache cache, BigTable table, Expression<Func<T, TParameter>> field, long value)
+        private BigChange.FromRead CreateIncrementRule<T, TParameter>(ReflectionCache reflection, BigTable table, Expression<Func<T, TParameter>> field, long value)
             where TParameter : IBigTableField
         {
-            var columnName = ExtractColumnName(cache, field);
-            var familyName = ExtractFamilyName<T, TParameter>(cache, field);
+            var columnName = ExtractColumnName(reflection, field);
+            var familyName = ExtractFamilyName<T, TParameter>(reflection, field);
             return BigChange.FromRead.CreateCellIncrement(familyName, columnName, value, table.Encoding);
         }
 
-        private BigChange.FromRead CreateAppendRule<T, TParameter>(ReflectionCache cache, BigTable table, Expression<Func<T, TParameter>> field, string value)
+        private BigChange.FromRead CreateAppendRule<T, TParameter>(ReflectionCache reflection, BigTable table, Expression<Func<T, TParameter>> field, string value)
             where TParameter : IBigTableField
         {
-            var columnName = ExtractColumnName(cache, field);
-            var familyName = ExtractFamilyName<T, TParameter>(cache, field);
+            var columnName = ExtractColumnName(reflection, field);
+            var familyName = ExtractFamilyName<T, TParameter>(reflection, field);
             return BigChange.FromRead.CreateCellAppend(familyName, columnName, value, table.Encoding);
         }
 
-        private BigChange.FromRead CreateAppendRule<T, TParameter>(ReflectionCache cache, BigTable table, Expression<Func<T, TParameter>> field, byte[] value)
+        private BigChange.FromRead CreateAppendRule<T, TParameter>(ReflectionCache reflection, BigTable table, Expression<Func<T, TParameter>> field, byte[] value)
             where TParameter : IBigTableField
         {
-            var columnName = ExtractColumnName(cache, field);
-            var familyName = ExtractFamilyName<T, TParameter>(cache, field);
+            var columnName = ExtractColumnName(reflection, field);
+            var familyName = ExtractFamilyName<T, TParameter>(reflection, field);
             return BigChange.FromRead.CreateCellAppend(familyName, columnName, value, table.Encoding);
         }
 
 
 
-        private string ExtractFamilyName<T, TParameter>(ReflectionCache cache, Expression<Func<T, TParameter>> field)
+        private string ExtractFamilyName<T, TParameter>(ReflectionCache reflection, Expression<Func<T, TParameter>> field)
             where TParameter : IBigTableField
         {
             throw new NotImplementedException();
         }
 
-        private string ExtractColumnName<T, TParameter>(ReflectionCache cache, Expression<Func<T, TParameter>> field)
+        private string ExtractColumnName<T, TParameter>(ReflectionCache reflection, Expression<Func<T, TParameter>> field)
         {
             MemberInfo member = GetMemberInfo(field);
 
-            if (!cache.FieldNameLookup.ContainsKey(member.Name))
+            if (!reflection.MemberNameLookup.ContainsKey(member.Name))
                 throw new MissingFieldException(typeof (T).Name, member.Name);
 
-            return cache.FieldNameLookup[member.Name];
+            return reflection.MemberNameLookup[member.Name];
         }
 
         private RowFilter ExtractFilter<T>(Expression<Func<T, bool>> predicate)
@@ -148,9 +149,12 @@ namespace BigtableNet.Mapper
             throw new NotImplementedException();
         }
 
-        private IEnumerable<BigChange> ExtractChanges<T>(T instance)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private IEnumerable<BigChange> ExtractChanges<T>(ReflectionCache reflection, T instance)
         {
-            return null;
+            var result = new List<BigChange>();
+            reflection.ExtractChanges(instance, (familyName, fieldName, value) => result.Add(BigChange.CreateCellUpdate(familyName, fieldName, value)));
+            return result;
         }
 
         private static MemberInfo GetMemberInfo<T, TParameter>(Expression<Func<T, TParameter>> lambda)

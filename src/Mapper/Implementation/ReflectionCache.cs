@@ -1,11 +1,14 @@
-﻿using System;
+﻿#region - Using Directives-
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Text;
 using BigtableNet.Common.Extensions;
@@ -16,10 +19,13 @@ using BigtableNet.Models.Abstraction;
 using BigtableNet.Models.Clients;
 using BigtableNet.Models.Types;
 using Newtonsoft.Json;
+#endregion
 
 namespace BigtableNet.Mapper.Implementation
 {
-    public delegate byte[] KeyGetterDelegate( object instance );
+    #region - Delegates -
+
+    public delegate byte[] KeyGetterDelegate(object instance);
 
     public delegate void KeySetterDelegate(object instance, byte[] bytes);
 
@@ -27,8 +33,13 @@ namespace BigtableNet.Mapper.Implementation
 
     public delegate object FieldGetterDelegate(object instance);
 
+    public delegate IEnumerable<BigField> ValueGetterDelegate(string familyName, string fieldName);
+
     public delegate bool IsSpecifiedDelegate(object instance);
 
+    public delegate void ChangeReceiverDelegate(string familyName, string fieldName, byte[] value);
+
+    #endregion
 
 
     /// <summary>
@@ -37,21 +48,30 @@ namespace BigtableNet.Mapper.Implementation
     [SuppressMessage("ReSharper", "InconsistentNaming", Justification="I disagree. _x = private, X = non-private, therefore _X should be private static, because it's private to the class but non-private between instances.")]
     public class ReflectionCache : IBigtableKeySerializer<object>
     {
+        #region - Private Static Member Variables -
+
         private static IInjectableServiceLocator _injectableServiceLocator;
 
-        private static readonly Type _BigtableFieldInterfaceType;
-        private static readonly MethodInfo _BigtableFieldGetter;
-
-        private static readonly object _Mutex = new {};
         private static readonly Dictionary<Type,ReflectionCache> _Cache = new Dictionary<Type, ReflectionCache>();
         private static readonly Dictionary<Type, FieldAccess> _FieldAccess = new Dictionary<Type, FieldAccess>();
         private static readonly Dictionary<Type, KeyAccess> _KeyAccess = new Dictionary<Type, KeyAccess>();
+        private static readonly Dictionary<Type, IBigtableFieldSerializer> _FieldSerializers = new Dictionary<Type, IBigtableFieldSerializer>();
+
+        private static readonly IBigtableFieldSerializer _DefaultFieldSerializer = new DefaultFieldSerializer();
+
+        #endregion
+
+        #region - Public Static Member Variables -
 
         /// <summary>
         /// When no serializer is registered for a particular type, Json.NET will be used.
         /// You can control the settings here.
         /// </summary>
         public static JsonSerializerSettings JsonSettings { get; set; }
+
+        #endregion
+
+        #region - Private Member Variables -
 
         private readonly ConcurrentDictionary<Type,object> _Adjuncts = new ConcurrentDictionary<Type, object>();
 
@@ -62,20 +82,29 @@ namespace BigtableNet.Mapper.Implementation
 
         private readonly ConstructorInfo _ctor;
 
+        #endregion
+
+        #region - Public Member Variables -
+
         public string TableName { get; private set; }
 
         public string KeyFieldSeparator { get; private set; }
 
-        public string[] KeyMembers { get; private set; }
+        public string[] KeyFields { get; private set; }
 
         public string[] RequiredFields { get; private set; }
 
         public string[] FieldNames { get; private set; }
+
         public string[] FamilyNames { get; private set; }
+
 
         public Dictionary<string, string> FieldNameLookup { get; private set; }
 
+        public Dictionary<string, string> MemberNameLookup { get; private set; }
+
         public Dictionary<string, Type> MemberTypes { get; private set; }
+
         public Dictionary<string, Type> FieldTypes { get; private set; }
 
 
@@ -85,7 +114,7 @@ namespace BigtableNet.Mapper.Implementation
 
         public Dictionary<string, IsSpecifiedDelegate> IsSpecified { get; private set; }
 
-        public Dictionary<string, bool> IsBigWrapper { get; private set; }
+        public Dictionary<string, bool> IsBigBoxed { get; private set; }
 
         public Encoding TableEncoding { get; set; }
 
@@ -93,14 +122,115 @@ namespace BigtableNet.Mapper.Implementation
 
         public KeySetterDelegate KeySetter { get; private set; }
 
+        #endregion
 
+        #region - Construction -
 
         static ReflectionCache()
         {
-            _BigtableFieldInterfaceType = typeof (IBigTableField);
-            _BigtableFieldGetter = typeof(IBigTableField<>).GetProperty("Value").GetGetMethod();
             JsonSettings = new JsonSerializerSettings();
         }
+
+        private ReflectionCache(Type type)
+        {
+            // Store type
+            _type = type;
+
+            try
+            {
+                // Grab constructor for faster creation
+                _ctor = _type.GetConstructor(Type.EmptyTypes);
+            }
+            catch (Exception)
+            {
+                throw new NotSupportedException("Type must implement a default constructor to be used with Bigtable.Mapper: " + _type.SimpleName());
+            }
+
+            try
+            {
+                // Extract table name, encoding, and key separator
+                var bigtable = _type.GetCustomAttribute<BigTableAttribute>();
+                if (bigtable != null)
+                {
+                    TableName = bigtable.TableName.UnCamelCase();
+                    TableEncoding = bigtable.Encoding;
+                    KeyFieldSeparator = bigtable.KeySeparator ?? BigDataClient.DefaultKeySeparator;
+
+                    if (bigtable.KeySerializer != default(Type))
+                    {
+                        _keySerializer = InjectableServiceLocator.LocateService(bigtable.KeySerializer);
+                    }
+                }
+
+                // Store
+                TableName = TableName ?? _type.Name;
+                TableEncoding = TableEncoding ?? BigModel.DefaultEncoding;
+                KeyFieldSeparator = KeyFieldSeparator ?? BigDataClient.DefaultKeySeparator;
+
+                // Extract key serializer and serializing methods
+                var serializerType = typeof(IBigtableKeySerializer<>).MakeGenericType(_type);
+                if (_keySerializer == null)
+                {
+                    _keySerializer = InjectableServiceLocator.CanCreate(serializerType) ? InjectableServiceLocator.LocateService(serializerType) : this;
+                }
+
+                // Store key serialization
+                _serializeKeyMethod = serializerType.GetMethod("SerializeKey");
+                _deserializeKeyMethod = serializerType.GetMethod("DeserializeKey");
+                KeyGetter = (instance) => (byte[])_serializeKeyMethod.Invoke(_keySerializer, new[] { instance, TableEncoding });
+                KeySetter = (instance, bytes) => _deserializeKeyMethod.Invoke(_keySerializer, new[] { instance, bytes, TableEncoding });
+
+            }
+            catch (Exception exception)
+            {
+                throw new ReflectionTypeLoadException(new [] { _type },new [] {exception}, "Exception encountered while inspecting type");
+            }
+
+            if( !TableName.IsValidBigtableQualifier() )
+                throw new NotSupportedException("The tablename specified for type is invalud: " + type.SimpleName());
+
+            PopulateFieldCache();
+        }
+
+        #endregion
+
+        #region - Public Static Functionality -
+
+
+        [SuppressMessage("ReSharper", "InconsistentlySynchronizedField", Justification = "I thought this through")]
+        public static ReflectionCache For(Type type)
+        {
+            // The double-check (anti)pattern works in certain circumstances against
+            // .Net 2.0 CLR or better, and Mono.  This small optimization will prevent
+            // lock acquisition at the expense of a hashtable lookup.  I estimate that
+            // there will be few enough types for this to be a net gain.  Internally,
+            // Lazy does this.  Why not just use Lazy?  I don't need the extra boxing,
+            // this code can be specific and doesn't need the extra steps in Lazy:
+            // http://referencesource.microsoft.com/#mscorlib/system/Lazy.cs,314
+            if (!_Cache.ContainsKey(type))
+            {
+                // I say it's okay to lock a private readonly field
+                lock (_Cache)
+                {
+                    // If this is an uncached type
+                    if (!_Cache.ContainsKey(type))
+                    {
+                        // Do the expensive work
+                        var cached = new ReflectionCache(type);
+
+                        // Store for next time
+                        _Cache.Add(type, cached);
+
+                        // Return cache
+                        return cached;
+                    }
+                }
+            }
+
+            // Excellect, this Type is cached
+            return _Cache[type];
+        }
+
         /// <summary>
         /// Set this to an implementation of IServiceLocator
         /// </summary>
@@ -118,257 +248,9 @@ namespace BigtableNet.Mapper.Implementation
             return For(typeof (T));
         }
 
-        [SuppressMessage("ReSharper", "InconsistentlySynchronizedField",Justification = "I thought this through")]
-        public static ReflectionCache For(Type type)
-        {
-            // The double-check (anti)pattern works in certain circumstances against
-            // .Net 2.0 CLR or better, and Mono.  This small optimization will prevent
-            // lock acquisition at the expense of a hashtable lookup.  I estimate that
-            // there will be few enough types for this to be a net gain.  Internally,
-            // Lazy does this.  Why not just use Lazy?  I don't need the extra boxing,
-            // this code can be specific and doesn't need the extra steps in Lazy:
-            // http://referencesource.microsoft.com/#mscorlib/system/Lazy.cs,314
-            if (!_Cache.ContainsKey(type))
-            {
-                lock (_Mutex)
-                {
-                    if (!_Cache.ContainsKey(type))
-                    {
-                        var cached = new ReflectionCache(type);
-                        _Cache.Add(type, cached);
-                        return cached;
-                    }
-                }
-            }
+        #endregion
 
-            return _Cache[type];
-        }
-
-
-        public ReflectionCache(Type type)
-        {
-            // Store type
-            _type = type;
-
-            // Extract table name, encoding, and key separator
-            var bigtable = _type.GetCustomAttribute<BigTableAttribute>();
-            if (bigtable != null)
-            {
-                TableName = bigtable.TableName;//.UnCamelCase();
-                TableEncoding = bigtable.Encoding;
-                KeyFieldSeparator = bigtable.KeySeparator ?? BigDataClient.DefaultKeySeparator;
-
-                if (bigtable.KeySerializer != default(Type))
-                {
-                    _keySerializer = InjectableServiceLocator.LocateService(bigtable.KeySerializer);
-                }
-            }
-
-            // Store
-            TableName = TableName ?? _type.Name.UnCamelCase();
-            TableEncoding = TableEncoding ?? BigModel.DefaultEncoding;
-            KeyFieldSeparator = KeyFieldSeparator ?? BigDataClient.DefaultKeySeparator;
-
-            // Extract key serializer and serializing methods
-            var serializerType = typeof(IBigtableKeySerializer<>).MakeGenericType(_type);
-            if (_keySerializer == null)
-            {
-                _keySerializer = InjectableServiceLocator.CanCreate(serializerType) ? InjectableServiceLocator.LocateService(serializerType) : this;
-            }
-
-            // Store key serialization
-            _serializeKeyMethod = serializerType.GetMethod("SerializeKey");
-            _deserializeKeyMethod = serializerType.GetMethod("DeserializeKey");
-            KeyGetter = (instance) => (byte[])_serializeKeyMethod.Invoke(_keySerializer, new [] { instance, TableEncoding });
-            KeySetter = (instance, bytes) => _deserializeKeyMethod.Invoke(_keySerializer, new [] {instance, bytes, TableEncoding});
-
-            // Locals
-            var fieldNames = new List<string>();
-            var familyNames = new List<string>();
-            var keyMembers = new List<string>();
-            var requiredFields = new List<string>();
-            var keyOrder = new Dictionary<string, int>();
-
-            // Initialize instance member
-            Setters = new Dictionary<string, FieldSetterDelegate>();
-            Getters = new Dictionary<string, FieldGetterDelegate>();
-            IsSpecified = new Dictionary<string, IsSpecifiedDelegate>();
-            IsBigWrapper = new Dictionary<string, bool>();
-            MemberTypes = new Dictionary<string, Type>();
-            FieldTypes = new Dictionary<string, Type>();
-            FieldNameLookup = new Dictionary<string, string>();
-
-            // Find all members on instance, does not support inheritance
-            var members = _type
-                .GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
-                .Union(_type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
-                .Cast<MemberInfo>()).ToArray();
-
-            // Column family will carry over so it does not need to be applied to each and every member
-            // TODO: Document this behavior
-            var columnFamily = BigModel.DefaultColumnFamilyName;
-            var defaultColumnFamilyAttribute = _type.GetCustomAttribute<ColumnFamilyAttribute>();
-            if (defaultColumnFamilyAttribute != null)
-                columnFamily = defaultColumnFamilyAttribute.Name;
-
-            // Iterate instance members
-            foreach (var member in members)
-            {
-                // Determine field name
-                var bigtableField = member.GetCustomAttribute<BigTableFieldAttribute>();
-                var memberName = member.Name;
-                var fieldName = default(string);
-                if (bigtableField == null)
-                {
-                    fieldName = memberName;
-                }
-                else
-                {
-                    fieldName = bigtableField.Name;
-                }
-                if (!fieldName.IsValidBigtableQualifier())
-                {
-                    throw new NotSupportedException(String.Format("The qualifier {0} on {1} is not valid", fieldName, TableName));
-                }
-
-
-                // Get key information
-                var dataType = default(Type);
-                var bigtableKey = member.GetCustomAttribute<BigTableKeyAttribute>();
-                var isKey = false;
-
-                // Extract accessors
-                if (!ExtractAccessors(member, fieldName, ref dataType, ref isKey))
-                {
-                    // If this wasn't a field or property, skip the rest for this member
-                    continue;
-                }
-
-                // Extract key information
-                if (isKey )
-                {
-                    // ReSharper disable once MergeConditionalExpression 
-                    // bug: https://youtrack.jetbrains.com/issue/RSRP-451492
-                    keyOrder.Add(memberName, bigtableKey != null ? bigtableKey.Ordinal : int.MaxValue);
-                    keyMembers.Add(memberName);
-                }
-                else
-                {
-                    // Determine column family
-                    var columnFamilyAttribute = member.GetCustomAttribute<ColumnFamilyAttribute>();
-                    if (columnFamilyAttribute != null)
-                    {
-                        // Carry column families over to next field
-                        columnFamily = columnFamilyAttribute.Name ?? columnFamily;
-                    }
-
-                    familyNames.Add(columnFamily);
-                    fieldNames.Add(fieldName);
-                }
-
-                FieldNameLookup.Add(memberName, fieldName);
-
-                // Store field information
-                MemberTypes.Add(memberName, dataType);
-                FieldTypes.Add(fieldName, dataType);
-
-                // Extract requiredness
-                if (member.GetCustomAttributes(typeof(RequiredAttribute), true).Any())
-                    requiredFields.Add(member.Name);
-            }
-
-            // Ensure we have keys
-            if (!keyMembers.Any())
-            {
-                throw new MissingPrimaryKeyException(String.Format("Table {0} did not specify any keys.", TableName));
-            }
-
-            // Grab constructor for faster creation
-            _ctor = _type.GetConstructor(Type.EmptyTypes);
-
-            // Store server field names
-            FieldNames = fieldNames.ToArray();
-            FamilyNames = familyNames.ToArray();
-            RequiredFields = requiredFields.ToArray();
-
-            // Order the keys
-            if (keyOrder.Any())
-            {
-                KeyMembers = keyMembers
-                    .OrderBy(key => keyOrder.ContainsKey(key) ? keyOrder[key] : Int32.MaxValue)
-                    .ToArray();
-            }
-            else
-            {
-                KeyMembers = keyMembers.ToArray();
-            }
-        }
-
-        private bool ExtractAccessors(MemberInfo member, string fieldName, ref Type dataType, ref bool isKey)
-        {
-            // Locals
-            var getter = default(FieldGetterDelegate);
-            var setter = default(FieldSetterDelegate);
-
-            // Homogenize fields and properties
-            switch (member.MemberType)
-            {
-                case System.Reflection.MemberTypes.Field:
-                    var field = ((FieldInfo) member);
-                    dataType = field.FieldType;
-                    getter = field.GetValue;
-                    setter = field.SetValue;
-                    break;
-
-                case System.Reflection.MemberTypes.Property:
-                    var property = ((PropertyInfo) member);
-                    dataType = property.PropertyType;
-                    getter = property.GetValue;
-                    setter = property.SetValue;
-                    break;
-
-                default:
-                    // Ignore other member types
-                    return false;
-            }
-
-            // Inspect fields for key, specifiable/actual data type
-            var bigtableKey = member.GetCustomAttribute<BigTableKeyAttribute>();
-            var genDataType = dataType.IsGenericType ? dataType.GetGenericTypeDefinition() : null;
-            var isBigField = genDataType == typeof(BigTableField<>);
-            var isBigKey = genDataType == typeof(BigTableKey<>);
-            isKey = bigtableKey != null || genDataType == typeof(BigTableKey<>);
-            var isBigWrapper = isBigField || isBigKey;
-            IsBigWrapper.Add(fieldName,isBigWrapper);
-            
-            // Store accessors
-            if (isBigWrapper)
-            {
-                var subDataType = dataType.GenericTypeArguments[0];
-                var access = isKey ? (BigAccess) GetKeyAccess(subDataType) : GetFieldAccess(subDataType);
-                IsSpecified.Add(fieldName, target => ((IBigTableField)getter(target)).IsSpecified);
-                Getters.Add(fieldName, target => access.ValueGetter(getter(target)));
-                var useDataType = dataType;
-                Setters.Add(fieldName, (target, value) =>
-                {
-                    var newValue = Activator.CreateInstance(useDataType);
-
-                    access.ValueSetter(newValue, value);
-                    setter(target,newValue);
-                });
-
-                dataType = subDataType;
-            }
-            else
-            {
-                IsSpecified.Add(fieldName, target => true);
-                Getters.Add(fieldName, getter);
-                Setters.Add(fieldName, setter);
-            }
-
-            // Indicate is property of field
-            return true;
-        }
+        #region - Public Functionality -
 
         /// <summary>
         /// Caches some T that is related to this type (like BigTable instance)
@@ -381,7 +263,7 @@ namespace BigtableNet.Mapper.Implementation
         /// <summary>
         /// Create and populate an instance of the cached type
         /// </summary>
-        public object CreateInstance(byte[] key, Func<string, string, IEnumerable<BigField>> valueGetter)
+        public object CreateInstance(byte[] key, ValueGetterDelegate valueGetter)
         {
             // Create an instance
             var instance = _ctor.Invoke(new object[] {});
@@ -393,7 +275,8 @@ namespace BigtableNet.Mapper.Implementation
             return PopulateInstance(key, valueGetter, instance);
 
         }
-        public object PopulateInstance(byte[] key, Func<string, string, IEnumerable<BigField>> valueGetter, object instance)
+
+        public object PopulateInstance(byte[] key, ValueGetterDelegate valueGetter, object instance)
         {
             Dictionary<long, object> versions = new Dictionary<long, object>();
 
@@ -416,17 +299,16 @@ namespace BigtableNet.Mapper.Implementation
                 var orderedValues = values.OrderByDescending(item => item.Timestamp);
                 var cell = orderedValues.First();
 
-                // TODO: Cache these
                 // Find a serializer for this type
                 var valueType = FieldTypes[field];
-                var serializers = BigtableReader.FieldSerializers.Where(s => s.CanHandleType(valueType)).ToArray();
+                var serializer = GetSerializerForType(valueType);
                 // Deserialize
-                var actualValue = serializers.Any() ? serializers.First().DeserializeField(cell.Value, TableEncoding) : JsonConvert.DeserializeObject(TableEncoding.GetString(cell.Value), valueType, JsonSettings);
+                var actualValue = serializer.DeserializeField(valueType, cell.Value, TableEncoding);
 
                 // Set the current field's value
                 Setters[field](instance, actualValue);
                 // Only BigField
-                if (false && IsBigWrapper[field])
+                if (false && IsBigBoxed[field])
                 {
                     // Need member
                     var access = GetFieldAccess(MemberTypes[field]);
@@ -469,6 +351,240 @@ namespace BigtableNet.Mapper.Implementation
             return instance;
         }
 
+        public void ExtractChanges(object instance, ChangeReceiverDelegate changeReceiver)
+        {
+            // Contract 
+            if( instance == null )
+                throw new ArgumentNullException("instance","Can not extract changes on a null reference");
+
+
+            for (int index = 0; index < FieldNames.Length; index++)
+            {
+                var familyName = FamilyNames[index];
+                var fieldName = FieldNames[index];
+                var memberType = MemberTypes[MemberNameLookup[fieldName]];
+                if (false && IsBigBoxed[fieldName])
+                {
+                    
+
+                }
+                else
+                {
+                    var value = Getters[fieldName](instance);
+                    var serializer = GetSerializerForType(memberType);
+                    var valueBytes = serializer.SerializeField(memberType, value, TableEncoding);
+                    changeReceiver(familyName, fieldName, valueBytes);
+                }
+            }
+        }
+
+        #endregion
+
+        #region - Private Functionality -
+
+        private void PopulateFieldCache()
+        {
+            // Locals
+            var fieldNames = new List<string>();
+            var familyNames = new List<string>();
+            var keyFields = new List<string>();
+            var requiredFields = new List<string>();
+            var keyOrder = new Dictionary<string, int>();
+
+            // Initialize instance member
+            Setters = new Dictionary<string, FieldSetterDelegate>();
+            Getters = new Dictionary<string, FieldGetterDelegate>();
+            IsSpecified = new Dictionary<string, IsSpecifiedDelegate>();
+            IsBigBoxed = new Dictionary<string, bool>();
+            MemberTypes = new Dictionary<string, Type>();
+            FieldTypes = new Dictionary<string, Type>();
+            FieldNameLookup = new Dictionary<string, string>();
+            MemberNameLookup = new Dictionary<string, string>();
+
+            // Find all members on instance, does not support inheritance
+            var members = _type
+                .GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+                .Union(_type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+                    .Cast<MemberInfo>()).ToArray();
+
+            // Column family will carry over so it does not need to be applied to each and every member
+            // TODO: Document this behavior
+            var columnFamily = BigModel.DefaultColumnFamilyName;
+            var defaultColumnFamilyAttribute = _type.GetCustomAttribute<ColumnFamilyAttribute>();
+            if (defaultColumnFamilyAttribute != null)
+                columnFamily = defaultColumnFamilyAttribute.Name;
+
+            // Iterate instance members
+            foreach (var member in members)
+            {
+                // Locals
+                var dataType = default(Type);
+
+                // Honor the standard "ignore this field/property" annotations
+                if (member.GetCustomAttribute<JsonIgnoreAttribute>() != null || member.GetCustomAttribute <NonSerializedAttribute>() != null )
+                    continue;
+
+                // Determine field name
+                var bigtableField = member.GetCustomAttribute<BigTableFieldAttribute>();
+                var memberName = member.Name;
+                var fieldName = bigtableField == null ? memberName : bigtableField.Name;
+
+                // Validate field name
+                if (!fieldName.IsValidBigtableQualifier())
+                {
+                    throw new NotSupportedException(String.Format("The qualifier {0} on {1} is not valid", fieldName, TableName));
+                }
+
+                try
+                {
+
+                    // Get key information
+                    var bigtableKey = member.GetCustomAttribute<BigTableKeyAttribute>();
+                    var isKey = false;
+
+                    // Extract accessors
+                    if (!ExtractAccessors(member, fieldName, ref dataType, ref isKey))
+                    {
+                        // If this wasn't a field or property, skip the rest for this member
+                        continue;
+                    }
+
+                    // Extract key information
+                    if (isKey)
+                    {
+                        // ReSharper disable once MergeConditionalExpression 
+                        // bug: https://youtrack.jetbrains.com/issue/RSRP-451492
+                        keyOrder.Add(fieldName, bigtableKey != null ? bigtableKey.Ordinal : int.MaxValue);
+                        keyFields.Add(fieldName);
+                    }
+                    else
+                    {
+                        // Determine column family
+                        var columnFamilyAttribute = member.GetCustomAttribute<ColumnFamilyAttribute>();
+                        if (columnFamilyAttribute != null)
+                        {
+                            // Carry column families over to next field
+                            columnFamily = columnFamilyAttribute.Name ?? columnFamily;
+                        }
+
+                        familyNames.Add(columnFamily);
+                        fieldNames.Add(fieldName);
+                    }
+                }
+                catch (Exception exception)
+                {
+                    throw new Exception("Problem while extracting field/key information", exception);
+                }
+
+                try
+                {
+                    // Store field information
+                    MemberTypes.Add(memberName, dataType);
+                    FieldTypes.Add(fieldName, dataType);
+                    FieldNameLookup.Add(memberName, fieldName);
+                    MemberNameLookup.Add(fieldName, memberName);
+
+                    // Extract requiredness
+                    if (member.GetCustomAttributes(typeof(RequiredAttribute), true).Any())
+                        requiredFields.Add(fieldName);
+                }
+                catch (ArgumentException exception)
+                {
+                    throw new NotSupportedException("Each field/key must be uniquely.  Member: " + member.Name + " named on type " + _type.SimpleName(), exception);
+                }
+
+            }
+
+            // Ensure we have keys
+            if (!keyFields.Any())
+            {
+                throw new MissingPrimaryKeyException(String.Format("Table {0} did not specify any keys.", TableName));
+            }
+
+            // Store field data
+            FieldNames = fieldNames.ToArray();
+            FamilyNames = familyNames.ToArray();
+            RequiredFields = requiredFields.ToArray();
+
+            // Order the keys
+            if (keyOrder.Any())
+            {
+                KeyFields = keyFields
+                    .OrderBy(key => keyOrder.ContainsKey(key) ? keyOrder[key] : Int32.MaxValue)
+                    .ToArray();
+            }
+            else
+            {
+                KeyFields = keyFields.ToArray();
+            }
+        }
+        private bool ExtractAccessors(MemberInfo member, string fieldName, ref Type dataType, ref bool isKey)
+        {
+            // Locals
+            var getter = default(FieldGetterDelegate);
+            var setter = default(FieldSetterDelegate);
+
+            // Homogenize fields and properties
+            switch (member.MemberType)
+            {
+                case System.Reflection.MemberTypes.Field:
+                    var field = ((FieldInfo)member);
+                    dataType = field.FieldType;
+                    getter = field.GetValue;
+                    setter = field.SetValue;
+                    break;
+
+                case System.Reflection.MemberTypes.Property:
+                    var property = ((PropertyInfo)member);
+                    dataType = property.PropertyType;
+                    getter = property.GetValue;
+                    setter = property.SetValue;
+                    break;
+
+                default:
+                    // Ignore other member types
+                    return false;
+            }
+
+            // Inspect fields for key, specifiable/actual data type
+            var bigtableKey = member.GetCustomAttribute<BigTableKeyAttribute>();
+            var genDataType = dataType.IsGenericType ? dataType.GetGenericTypeDefinition() : null;
+            var isBigField = genDataType == typeof(BigTableField<>);
+            var isBigKey = genDataType == typeof(BigTableKey<>);
+            isKey = bigtableKey != null || genDataType == typeof(BigTableKey<>);
+            var isBigWrapper = isBigField || isBigKey;
+            IsBigBoxed.Add(fieldName, isBigWrapper);
+
+            // Store accessors
+            if (isBigWrapper)
+            {
+                var subDataType = dataType.GenericTypeArguments[0];
+                var access = isKey ? (BigAccess)GetKeyAccess(subDataType) : GetFieldAccess(subDataType);
+                IsSpecified.Add(fieldName, target => ((IBigTableField)getter(target)).IsSpecified);
+                Getters.Add(fieldName, target => access.ValueGetter(getter(target)));
+                var useDataType = dataType;
+                Setters.Add(fieldName, (target, value) =>
+                {
+                    var newValue = Activator.CreateInstance(useDataType);
+
+                    access.ValueSetter(newValue, value);
+                    setter(target, newValue);
+                });
+
+                dataType = subDataType;
+            }
+            else
+            {
+                IsSpecified.Add(fieldName, target => true);
+                Getters.Add(fieldName, getter);
+                Setters.Add(fieldName, setter);
+            }
+
+            // Indicate is property of field
+            return true;
+        }
+
+
         private KeyAccess GetKeyAccess(Type fieldType)
         {
             // See other note about double-check
@@ -486,6 +602,7 @@ namespace BigtableNet.Mapper.Implementation
 
             return _KeyAccess[fieldType];
         }
+
         private FieldAccess GetFieldAccess(Type fieldType)
         {
             // See other note about double-check
@@ -504,6 +621,29 @@ namespace BigtableNet.Mapper.Implementation
             return _FieldAccess[fieldType];
         }
 
+        private IBigtableFieldSerializer GetSerializerForType(Type valueType)
+        {
+            if (!_FieldSerializers.ContainsKey(valueType))
+            {
+                lock (_FieldSerializers)
+                {
+                    if (!_FieldSerializers.ContainsKey(valueType))
+                    {
+                        var potentialSerializers = BigtableReader.FieldSerializers.Where(s => s.CanHandleType(valueType));
+                        var winner = potentialSerializers.FirstOrDefault();
+                        _FieldSerializers.Add(valueType, winner ?? _DefaultFieldSerializer);
+                    }
+                }
+            }
+
+            return _FieldSerializers[valueType];
+        }
+
+        #endregion
+
+        #region - Default IBigtableKeySerializer Implementation -
+
+
         /// <summary>
         /// Default key serializer
         /// </summary>
@@ -521,19 +661,18 @@ namespace BigtableNet.Mapper.Implementation
             var separator = encoding.GetBytes(KeyFieldSeparator);
 
             // Iterate keys
-            for ( int index = 0; index < KeyMembers.Length; index++)
+            for ( int index = 0; index < KeyFields.Length; index++)
             {
                 // Localize
-                var memberName = KeyMembers[index];
-                var fieldName = FieldNameLookup[memberName];
-                var required = RequiredFields.Contains(memberName);
+                var fieldName = KeyFields[index];
+                var required = RequiredFields.Contains(fieldName);
                 var value = Getters[fieldName](instance);
 
                 // 
                 if (value == null)
                 {
                     if( required )
-                        throw new SerializationException(String.Format("The member {0} on type {1} is marked as required but was not specified", memberName, _type));
+                        throw new SerializationException(String.Format("The member {0} on type {1} is marked as required but was not specified", FieldNameLookup[fieldName], _type));
                     bytes.Add(separator);
                     //missingKey = true;
                     continue;
@@ -546,27 +685,21 @@ namespace BigtableNet.Mapper.Implementation
                 //    throw new SerializationException("The default serializer insists that the primary keys are filled in order.  Missing keys are okay as long as all subsequent keys are missing as well.", exception);
                 //}
                 var valueType = value.GetType();
-                var serializers = BigtableReader.FieldSerializers.Where(s => s.CanHandleType(valueType)).ToArray();
-                if (serializers.Any())
+                var serializer = GetSerializerForType(valueType);
+                
+                if( IsBigBoxed[fieldName] )
                 {
-                    bytes.Add(serializers.First().SerializeField(value, encoding));
-                }
-                else
-                {
-                    if( IsBigWrapper[fieldName] )
+                    if (!IsSpecified[fieldName](instance))
                     {
-                        if (!IsSpecified[fieldName](instance))
-                        {
-                            bytes.Add(new byte[0]);
-                            continue;
-                        }
-                        //var fieldType = MemberTypes[memberName];
-                        //var access = GetKeyAccess(fieldType);
-                        //value = access.ValueGetter(value);
+                        bytes.Add(new byte[0]);
+                        continue;
                     }
-                    var serialized = JsonConvert.SerializeObject(value, JsonSettings);
-                    bytes.Add(encoding.GetBytes(serialized));
+                    //var fieldType = MemberTypes[memberName];
+                    //var access = GetKeyAccess(fieldType);
+                    //value = access.ValueGetter(value);
                 }
+                var serialized = serializer.SerializeField(valueType, value, TableEncoding);
+                bytes.Add(serialized);
             }
             var bytesSize = bytes.Count - 1;
             var sepLength = (bytesSize) * separator.Length;
@@ -595,6 +728,7 @@ namespace BigtableNet.Mapper.Implementation
             // Tada!
             return results;
         }
+
 
         /// <summary>
         /// Default key deserializer
@@ -653,18 +787,18 @@ namespace BigtableNet.Mapper.Implementation
             }
 
             // Populate the key fields on the POCO
-            for (int index = 0; index < KeyMembers.Length; index++)
+            for (int index = 0; index < KeyFields.Length; index++)
             {
                 // Localize
-                var member = KeyMembers[index];
-                var required = RequiredFields.Contains(member);
+                var fieldName = KeyFields[index];
+                var required = RequiredFields.Contains(fieldName);
 
                 // Are there more key fields than we have keys?
                 if (index >= keys.Count)
                 {
                     // No more key bytes available, was this required?
                     if( required )
-                        throw new KeyNotFoundException(String.Format("Member {0} on type {1} is marked as required but is missing in the deserialization stream.", member, _type));
+                        throw new KeyNotFoundException(String.Format("Member {0} on type {1} is marked as required but is missing in the deserialization stream.", FieldNameLookup[fieldName], _type));
 
                     // Non-required field, continue to check the rest of the fields
                     continue;
@@ -678,26 +812,29 @@ namespace BigtableNet.Mapper.Implementation
                 if (valueBytes == null)
                 {
                     if (required)
-                        throw new SerializationException(String.Format("Member {0} on type {1} is marked as required but was not specified", member, _type));
+                        throw new SerializationException(String.Format("Member {0} on type {1} is marked as required but was not specified", FieldNameLookup[fieldName], _type));
 
                     // Continue to next key field
                     continue;
                 }
 
                 // Get destination type
-                var valueType = MemberTypes[member];
+                var valueType = MemberTypes[fieldName];
 
                 // Find a serializer for this type
-                var serializers = BigtableReader.FieldSerializers.Where(s => s.CanHandleType(valueType)).ToArray();
+                var serializer = GetSerializerForType(valueType);
 
                 // Deserialize
-                var value = serializers.Any() ? serializers.First().DeserializeField(valueBytes, encoding) : JsonConvert.DeserializeObject(TableEncoding.GetString(valueBytes), valueType, JsonSettings);
+                var value = serializer.DeserializeField(valueType, valueBytes, TableEncoding);
 
                 // Store value
-                var fieldName = FieldNameLookup[member];
                 Setters[fieldName](instance, value);
             }
         }
+
+        #endregion
+
+        #region - Private Nested Types -
 
         class BigAccess
         {
@@ -726,6 +863,7 @@ namespace BigtableNet.Mapper.Implementation
 
             }
         }
+
         class KeyAccess : BigAccess
         {
             public KeyAccess(Type type) : base(typeof(BigTableKey<>),type)
@@ -735,7 +873,7 @@ namespace BigtableNet.Mapper.Implementation
         }
 
         /// <summary>
-        /// Default service locator
+        /// Default service locator, responsible for creating services.  So far, it's just key serializer
         /// This exists only so it may be replaced by a custom implementation, or Autofac, etc.
         /// </summary>
         class DefaultServiceLocator : IInjectableServiceLocator
@@ -750,5 +888,28 @@ namespace BigtableNet.Mapper.Implementation
                 return Activator.CreateInstance(type);
             }
         }
+
+        class DefaultFieldSerializer : IBigtableFieldSerializer
+        {
+            
+            public bool CanHandleType(Type type)
+            {
+                return !(type.IsAbstract || type.IsInterface);
+            }
+
+            public byte[] SerializeField(Type type, object value, Encoding encoding)
+            {
+                var valueBytes = JsonConvert.SerializeObject(value, JsonSettings);
+                return encoding.GetBytes(valueBytes);
+            }
+
+            public object DeserializeField(Type type, byte[] valueBytes, Encoding encoding)
+            {
+                var value = encoding.GetString(valueBytes);
+                return JsonConvert.DeserializeObject(value, type, JsonSettings);
+            }
+        }
+
+        #endregion
     }
 }

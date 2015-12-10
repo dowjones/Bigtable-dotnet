@@ -446,6 +446,7 @@ namespace BigtableNet.Models.Clients
                 TableName = tableName.ToTableId(ClusterId),
                 Mutations = { changes.Select(change => change.AsApiObject()) }
             };
+
             await _client.MutateRowAsync(request, cancellationToken: cancellationToken);
             await Task.Yield();
         }

@@ -22,7 +22,7 @@ namespace BigtableNet.Models.Types
                 FamilyName = familyName,
                 ColumnName = columnName,
                 Value = newValue,
-                Timestamp = timestamp
+                Timestamp = timestamp == 0 ? UpdateCellRequest.CurrentTimestamp : timestamp
             };
         }
 
@@ -34,7 +34,7 @@ namespace BigtableNet.Models.Types
                 FamilyName = familyName,
                 ColumnName = columnName,
                 StringValue = newValue,
-                Timestamp = timestamp
+                Timestamp = timestamp == 0 ? UpdateCellRequest.CurrentTimestamp : timestamp
             };
         }
 
@@ -130,6 +130,13 @@ namespace BigtableNet.Models.Types
 
         public class UpdateCellRequest : CellChangeRequest
         {
+            public static bool UseUtcTimestamps { get; set; }
+
+            public static long CurrentTimestamp
+            {
+                get { return UseUtcTimestamps ? DateTime.UtcNow.ToUnixTime() : DateTime.Now.ToUnixTime(); }
+            }
+
             public byte[] Value { get; set; }
 
             public string StringValue

@@ -41,53 +41,74 @@ namespace Examples.Mapped
                         return;
                     }
 
-                    // -----------------------------------------------------------------------------------------------------------------///
+                    //// -----------------------------------------------------------------------------------------------------------------///
 
-                    // Inform User
-                    CommandLine.InformUser("Start", "Getting first pricing poco record" +
-                                                    "");
+                    //// Inform User
+                    //CommandLine.InformUser("Start", "Getting first pricing poco record");
 
-                    // Seek one record
-                    var firstPricing = await bigtable.GetFirstRowAsync<Pricing>();
+                    //// Seek one record
+                    //var firstPricing = await bigtable.GetFirstRowAsync<Pricing>();
 
-                    // Show user
-                    DisplayPricing(firstPricing);
+                    //// Show user
+                    //DisplayPricing(firstPricing);
 
-                    // -----------------------------------------------------------------------------------------------------------------///
+                    //// -----------------------------------------------------------------------------------------------------------------///
 
-                    // Inform User
-                    CommandLine.WaitForUserAndThen("get keyed pricing poco");
+                    //// Inform User
+                    //CommandLine.WaitForUserAndThen("get keyed pricing poco");
                     
-                    // Seek one record
-                    var pricing = await bigtable.GetAsync(new Pricing { Id = Constants.SeekId, Date = Constants.SeekDate });
+                    //// Seek one record
+                    //var pricing = await bigtable.GetAsync(new Pricing { Id = Constants.SeekId, Date = Constants.SeekDate });
 
-                    // Show user
-                    DisplayPricing(pricing);
+                    //// Show user
+                    //DisplayPricing(pricing);
+
+                    //// -----------------------------------------------------------------------------------------------------------------///
+
+                    //// Inform User
+                    //CommandLine.WaitForUserAndThen("get alternate-schema pricing poco");
+
+                    //// Seek one record using alternate schema
+                    //var simplePricing = await bigtable.GetAsync(new SimplePricing {Id = Constants.SeekId, Date = Constants.SeekDate});
+
+                    //// Show user
+                    //DisplayPricing(FromSimplePricing(simplePricing));
+
+                    //// -----------------------------------------------------------------------------------------------------------------///
+
+                    //// Inform User
+                    //CommandLine.WaitForUserAndThen("scan partially-keyed pricing poco");
+
+                    //// Seek one record
+                    //var pricings = await bigtable.ScanAsync(new Pricing { Id = Constants.SeekId }, new Pricing { Id = Constants.SeekId + 1 });
+
+                    //// Show user
+                    //DisplayPricing(pricings.ToArray());
+
 
                     // -----------------------------------------------------------------------------------------------------------------///
 
                     // Inform User
-                    CommandLine.WaitForUserAndThen("get alternate-schema pricing poco");
-
-                    // Seek one record using alternate schema
-                    var simplePricing = await bigtable.GetAsync(new SimplePricing {Id = Constants.SeekId, Date = Constants.SeekDate});
-
-                    // Show user
-                    DisplayPricing(FromSimplePricing(simplePricing));
-
-                    // -----------------------------------------------------------------------------------------------------------------///
-
-                    // Inform User
-                    CommandLine.WaitForUserAndThen("scan partially-keyed pricing poco");
+                    CommandLine.WaitForUserAndThen("read write read");
 
                     // Seek one record
-                    var pricings = await bigtable.ScanAsync(new Pricing { Id = Constants.SeekId }, new Pricing { Id = Constants.SeekId + 1 });
+                    var rewrite = await bigtable.GetAsync(new Pricing { Id = Constants.SeekId, Date = Constants.SeekDate + 1 });
 
-                    // Show user
-                    DisplayPricing(pricings.ToArray());
+                    DisplayPricing(rewrite);
 
+                    var tempHigh = rewrite.High;
+                    var tempLow = rewrite.Low;
 
+                    rewrite.High = 142;
+                    rewrite.Low = null;
 
+                    await bigtable.UpdateAsync(rewrite);
+
+                    var rewriteRead = await bigtable.GetAsync(new Pricing { Id = Constants.SeekId, Date = Constants.SeekDate + 1 });
+                    DisplayPricing(rewrite,rewriteRead);
+                    rewrite.High = tempHigh;
+                    rewrite.Low = tempLow;
+                    await bigtable.UpdateAsync(rewrite);
                 }
             }
             catch (Exception exception)

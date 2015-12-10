@@ -3,12 +3,14 @@ Things that need to get done.
 
 ## Current Milestone ##
 
-- Either delete IObservable or commit to blocking or fix the glitch.
 - Complete Mapper library
 	- Hookup retention policy
 	- Solve MICROS mystery
+	- Finish writer implementation
+	- Clean up ReflectionCache
 - Review Models signatures, ensuring all permutations are implemented.
-
+- Enforce table and qualifier naming
+- Document each model and mapper methods
 
 ## Next Steps ##
 
