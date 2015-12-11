@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Go" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <ProjectName>BigtableNet</ProjectName>
+    <Configuration Condition="$(Configuration) == ''">Release</Configuration>
+    <ProjectRoot>$(MSBuildProjectDirectory)\..</ProjectRoot>
+    <BuildDir>$(ProjectRoot)\build</BuildDir>
+    <ArtifactsDir>$(ProjectRoot)\artifacts</ArtifactsDir>
+    <OutputDir>$(ArtifactsDir)\$(Configuration)</OutputDir>
+    <SourceDir>$(ProjectRoot)\src</SourceDir>
+    <GrpcDir>$(ProjectRoot)\submodules\grpc</GrpcDir>
+    <!--OwinHostDir>$(ProjectRoot)\lib\OwinHost</OwinHostDir-->
+    <!--<OwinHostDir>$(ProjectRoot)\src\packages\OwinHost.3.0.1\tools</OwinHostDir>-->
+    <ZipDir>$(ArtifactsDir)\zip</ZipDir>
+    <MSBuildCommunityTasksPath>$(BuildDir)</MSBuildCommunityTasksPath>
+    <BuildNumber>$(BUILD_NUMBER)</BuildNumber>
+    <BuildNumber Condition="'$(BuildNumber)' == ''">0</BuildNumber>
+    <BuildVersion>$(BUILD_VERSION)</BuildVersion>
+    <BuildVersion Condition="'$(BuildVersion)' == ''">0.1</BuildVersion>
+    <Version>$(BuildVersion).$(BuildNumber)</Version>
+    <NUnitDir>$(SourceDir)\packages\NUnit.Runners.3.0.1\tools</NUnitDir>
+    <NUnitAssembliesSpec>$(OutputDir)\BigtableNet.Tests.dll</NUnitAssembliesSpec>
+    <git_branch>n/a</git_branch>
+  </PropertyGroup>
+
+  <Import Project="$(BuildDir)\MSBuild.Community.Tasks.Targets" />
+  
+  <Target Name="Info">
+    <Message Text="Build number: $(BuildNumber)"/>
+    <Message Text="Branch name: $(git_branch)"/>
+    <Message Text="Version: $(Version)"/>
+    <Message Text="OS: $(OS)"/>
+  </Target>
+
+  <Target Name="Clean">
+    <RemoveDir Directories="$(ArtifactsDir)/$(Configuration)" Condition="Exists('$(ArtifactsDir)/$(Configuration)')" />
+  </Target>
+
+  <Target Name="BuildGrpcNative32">
+  	<Message Text="Source: $(GrpcDir)"/>
+    <MSBuild Projects="$(GrpcDir)\vsprojects\grpc_csharp_ext.sln" Properties="Configuration=$(Configuration);Platform=Win32"/>
+  </Target>
+
+  <Target Name="BuildGrpcNative64">
+  	<Message Text="Source: $(GrpcDir)"/>
+    <MSBuild Projects="$(GrpcDir)\vsprojects\grpc_csharp_ext.sln" Properties="Configuration=$(Configuration);Platform=x64"/>
+  </Target>
+
+  <Target Name="BuildGrpcNet" DependsOnTargets="BuildGrpcNative32;BuildGrpcNative64">
+  	<Message Text="Source: $(GrpcDir)"/>
+    <MSBuild Projects="$(GrpcDir)\src\csharp\Grpc.sln" Properties="Configuration=$(Configuration);Platform=Any CPU"/>
+  </Target>
+
+  <Target Name="Build" DependsOnTargets="Info;Clean;BuildGrpcNative32;BuildGrpcNative64;BuildGrpcNet">
+  	<Message Text="Source: $(SourceDir)"/>
+    <MSBuild Projects="$(SourceDir)\Common\BigtableNet.Common.csproj;$(SourceDir)\Native\BigtableNet.Native.csproj;$(SourceDir)\Models\BigtableNet.Models.csproj;$(SourceDir)\Mapper\BigtableNet.Mapper.csproj" Properties="OutputPath=$(OutputDir)/;Configuration=$(Configuration);Platform=Any CPU"/>
+    <CreateItem Include="$(NUnitAssembliesSpec)">
+        <Output TaskParameter="Include" ItemName="NUnitAssemblies"/>
+    </CreateItem>
+  </Target>
+
+  <Target Name="Test" DependsOnTargets="Build" Inputs="@(NUnitAssemblies)" Outputs="$(ArtifactsDir)\Test.Results.xml">
+    <NUnit Assemblies="@(NUnitAssemblies)" OutputXmlFile="$(ArtifactsDir)\Test.Results.xml" ToolPath="$(NUnitDir)"/>
+  </Target>
+
+  <Target Name="Go" DependsOnTargets="Info;Clean;Build"/>
+</Project>
