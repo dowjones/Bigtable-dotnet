@@ -7,8 +7,8 @@ To prime the build, you can simply run the command line builds script from the r
 
 ```
 
-scripts\build.bat /property:Configuration=Debug
-scripts\build.bat /property:Configuration=Release
+scripts\build-debug.bat
+scripts\build-release.bat
 
 or
 
