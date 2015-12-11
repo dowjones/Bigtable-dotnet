@@ -1,6 +1,27 @@
 ## Installation Guide ##
-
 This library is cross-platform and cross-architecture.  The gRPC library needed a few adjustments for this to work, and until those are merged back upstream, it is necessary to take a few extra steps in order to get started.
+
+### The easy way ###
+
+To prime the build, you can simply run the command line builds script from the repository's root folder: 
+
+```
+
+scripts\build.bat /property:Configuration=Debug
+scripts\build.bat /property:Configuration=Release
+
+or
+
+script/build.sh /property:Configuration=Debug
+script/build.sh /property:Configuration=Release
+
+```
+
+You can now open `src\Bigtable.NET.sln`. 
+
+
+### The hard way ###
+Open submodules\grpc\vsprojects\grpc_csharp_ext.sln in Visual Studio 2013.  Build 32 bit version and 64 bit version.  Close.
 
 Open submodules\grpc\src\csharp\Grpc.sln in Visual Studio 2013 or 2015.  Make sure you have the Package Restore turned on.  In Visual Studio 2015, the options are:
 
@@ -28,9 +49,32 @@ Deploying to Linux was successfully tested on 64-bit Ubuntu 15.04, Kernel 3.19.0
 
 Directions for compiling Mono can be found [here](http://www.mono-project.com/docs/compiling-mono/linux/).
 
-You will need to download, build and install protobuf from their [github repository](https://github.com/google/protobuf.git).
+If you are using apt-get, yum, or pacman and already have a sufficient version of mono, you should make sure build tools are installed
 
-You will then need configure the dynamic linker's runtime bindings:
+``` 
+
+ sudo apt-get install git autoconf libtool automake build-essential mono-devel gettext unzip
+
+```
+ 
+Start by cloning this repository.
+
+You will need to build and install [protobuf](https://github.com/google/protobuf.git) as a prerequisite.  This is a submodule of grpc, which is a submodule of Bigtable.NET:
+
+```
+
+git submodule update --init
+cd submodules/grpc
+git submodule update --init
+cd third_party/protobuf
+./autogen.sh
+./configure
+make
+make install
+
+```
+
+You will then need reconfigure the dynamic linker's runtime bindings:
 
 ```
 
@@ -39,6 +83,7 @@ ldconfig
 ```
 
 You will need to download, build and install grpc from their [github repository](https://github.com/grpc/grpc.git)
+
 
 In addition to building grpc, you will need to build and install the csharp plugin:
 

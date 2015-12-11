@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BigtableNet.Tests", "Tests\
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{C2C38664-361F-44B3-B21B-92784CBDAE15}"
 	ProjectSection(SolutionItems) = preProject
+		..\scripts\build.bat = ..\scripts\build.bat
+		..\scripts\build.sh = ..\scripts\build.sh
 		..\scripts\generate-proto-classes.bat = ..\scripts\generate-proto-classes.bat
 		..\scripts\generate-proto-classes.sh = ..\scripts\generate-proto-classes.sh
 	EndProjectSection
@@ -139,6 +141,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Legal", "Legal", "{C606DFEB
 	ProjectSection(SolutionItems) = preProject
 		..\DISCLAIMER.md = ..\DISCLAIMER.md
 		..\LICENSE.md = ..\LICENSE.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{6C884CD4-0C62-4655-9ECA-F71C54DA9219}"
+	ProjectSection(SolutionItems) = preProject
+		..\build\build.proj = ..\build\build.proj
 	EndProjectSection
 EndProject
 Global

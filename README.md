@@ -9,6 +9,29 @@ This library provides the first native client for connecting your .NET applicati
 You can read more about Google Bigtable's design in their [white paper](http://static.googleusercontent.com/media/research.google.com/en//archive/bigtable-osdi06.pdf).
 
 
+## Features ##
+
+- Cross-platform / Cross-architecture
+	- 32 or 64 bit
+	- Windows or Linux (kernel 3.19+)
+- .NET 4.5+ support
+	- Microsoft .NET
+	- Mono 4.2.1
+- Built on Google's gRPC and protobuf frameworks
+	- HTTP/2.0
+	- Proto 3
+- Purely asynchronous operation
+	- Task Parallels Library
+	- C# 5 async/await
+- Rx/Reactive methods for result streams
+	- IObservable / IObserver
+	- Thread-pool marshaling 
+- Three layers of abstraction from which to choose
+	- Directly consume gRPC
+	- Models for each Bigtable resource
+	- Work directly with POCOs
+
+
 ## Overview ##
 
 The Bigtable API is a combination of Google's [protobuf](https://developers.google.com/protocol-buffers/?hl=en) serialization framework and [gRPC](http://grpc.io), which provides the transport of protobuf serialized messages to well-defined RPC end-points.
@@ -21,12 +44,13 @@ This library is designed with three tiers of functionality from which to choose:
 
 2. **[Models](src/Models):** An abstraction of the Bigtable resources which simplifies most tasks but does not interfere with using lower level functionality (i.e. providing the RowFilter directly).
 
-3. **[Mapped](src/Mapped):** An additional layer of abstraction which provides both CRUD and advanced operations on POCOs.  There are Field and Key abstraction classes as well as attributes which provide similar functionality to [Json.NET](http://www.newtonsoft.com/json), such as changing the storage field name vs the POCO property name, however you are not bound to using them.  Advanced operations such compare-and-swap and atomically increment are  provided.  In addition, you can inject custom serialization for your fields and/or keys, as well as use provided implementations.  One example is hashing your keys transparently (as described in the [schema design](https://cloud.google.com/bigtable/docs/schema-design#types_of_row_keys) document).   
+3. **[Mapper](src/Mapper):** An additional layer of abstraction which provides both CRUD and advanced operations on POCOs.  There are Field and Key abstraction classes as well as attributes which provide similar functionality to [Json.NET](http://www.newtonsoft.com/json), such as changing the storage field name vs the POCO property name, however you are not bound to using them.  Advanced operations such compare-and-swap and atomically increment are  provided.  In addition, you can inject custom serialization for your fields and/or keys, as well as use provided implementations.  One example is hashing your keys transparently (as described in the [schema design](https://cloud.google.com/bigtable/docs/schema-design#types_of_row_keys) document).   
 
 More information about the design of this library can be found [in the documentation](doc/Design.md).
 
 
 ## Examples ##
+
 Show me the code!  There are four example projects included:
 
 **[Low-Level](src/Examples/LowLevel):** Demonstrates [creating your own client](src/Examples/LowLevel/SimpleClient.cs) using the the Native library.
@@ -116,12 +140,12 @@ From there you can run any of the other examples.
  
 ## Status ##
 
-This library is functional, but under development.
+This library is functional, but under development.  See each individual project for more detailed information.
 
 Once it has reached a stable state, we will provide the core libraries as [NuGet packages](https://www.nuget.org/).
 
 
-## Disclaimer ##
+## Legal ##
 
 This product is not affiliated with nor endorsed by Google, Microsoft, or the .NET Foundation in any way.
 
