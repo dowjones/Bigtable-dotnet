@@ -32,6 +32,7 @@ cd src
 cd ..
 
 :# Build
+echo: %CD%
 "C:\Program Files (x86)\MSBuild\14.0\Bin\msbuild.exe" build\build.proj /m /nr:false %*
 
 :# Woot
