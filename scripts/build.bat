@@ -1,38 +1,9 @@
 @echo off
 
 :# Run this tool from root git folder:  scripts\build.bat
-
-:# Ensure submodules are up-to-date
-git submodule update --init
-
-:# Move to grpc folder
-cd submodules
-cd grpc
-
-:# Ensure grpc submodules are up-to-date
-git submodule update --init
-
-:# Ensure submodule packages are restored
-cd vsprojects
-..\..\..\tools\nuget.exe restore -NonInteractive grpc_csharp_ext.sln
-cd ..
-cd src
-cd csharp
-..\..\..\..\tools\nuget.exe restore -NonInteractive Grpc.sln
-
-:# Move back to root
-cd ..
-cd ..
-cd ..
-cd ..
-
-:# Ensure solution packages are restored
-cd src
-..\tools\nuget.exe restore -NonInteractive Bigtable.NET.sln
-cd ..
+call scripts\build-prep.bat
 
 :# Build
-dir submodules\grpc
 "C:\Program Files (x86)\MSBuild\14.0\Bin\msbuild.exe" build\build.proj /m /nr:false %*
 
 :# Woot
