@@ -88,8 +88,6 @@ ldconfig
 
 ```
 
-You will need to download, build and install grpc from their [github repository](https://github.com/grpc/grpc.git)
-
 
 In addition to building grpc, you will need to build and install the csharp plugin:
 

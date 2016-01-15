@@ -33,7 +33,7 @@ namespace Examples.Modeled
 
         public void OnNext(BigRow value)
         {
-            Console.WriteLine(Thread.CurrentThread.ManagedThreadId);
+            //Console.WriteLine(Thread.CurrentThread.ManagedThreadId);
             CommandLine.DisplayRows( new[] { value } );
         }
     }

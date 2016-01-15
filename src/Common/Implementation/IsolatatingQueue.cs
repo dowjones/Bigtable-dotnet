@@ -37,7 +37,7 @@ namespace BigtableNet.Common.Implementation
                 {
                     if (_backQueue.Count > 0)
                     {
-                        Console.WriteLine("Swap {0} and {1}", _backQueue.Count, _frontQueue.Count);
+                        //Console.WriteLine("Swap {0} and {1}", _backQueue.Count, _frontQueue.Count);
                         var temp = _backQueue;
                         _backQueue = _frontQueue;
                         _frontQueue = temp;

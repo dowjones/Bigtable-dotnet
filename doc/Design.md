@@ -9,4 +9,4 @@ In addition, the Rx implementation was a little tricky due to the fact that the 
 
 ## Mapper is built on Models ##
 
-The decision to build the mapper on the models comes with a performance penalty due to the fact that each field.
+The decision to build the mapper on the models comes with a performance penalty due to the fact that each field is first inflated to a BigRow, and then deconstructed.  The internal implementation may change if I find this performance penalty too severe.  It was much easier to manage the code with this approach.
