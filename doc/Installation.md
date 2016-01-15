@@ -6,12 +6,13 @@ This library is cross-platform and cross-architecture.  The gRPC library needed 
 To prime the build, you can simply run the command line builds script from the repository's root folder: 
 
 ```
-
+scripts\build-prep.bat
 scripts\build-debug.bat
 scripts\build-release.bat
 
 or
 
+scripts/build-prep.sh
 script/build.sh /property:Configuration=Debug
 script/build.sh /property:Configuration=Release
 
@@ -22,7 +23,9 @@ You can now open `src\Bigtable.NET.sln`.
 
 ### The hard way ###
 
-Open submodules\grpc\vsprojects\grpc_csharp_ext.sln in Visual Studio 2013.  Build 32 bit version and 64 bit version.  Close.
+You must have Visual Studio Build Tools 2010 with the C++ build options installed for this to work as is.  Otherwise you will need to retarget the solution.  You can not retarget to 2015 (v140) at this time due to the grpc dependencies not having those version, therefore v100 or v120 is required.  Also, because the Windows 7.1 SDK creates the build target as "Windows7.1SDK", this toolchain will not work either =(  If you are in this boat or do not want to learn the inner workings of gRPC, please simple download the pre-built dependencies as mentioned in [Getting Started](../README.md#getting-started).
+
+Open submodules\grpc\vsprojects\grpc_csharp_ext.sln in Visual Studio 2013.  Build 32 bit version and 64 bit versions of both debug and release.  Close.
 
 Open submodules\grpc\src\csharp\Grpc.sln in Visual Studio 2013 or 2015.  Make sure you have the Package Restore turned on.  In Visual Studio 2015, the options are:
 
@@ -32,6 +35,8 @@ Open submodules\grpc\src\csharp\Grpc.sln in Visual Studio 2013 or 2015.  Make su
 Both should be checked.  Build the solution.
 
 This step is necessary because of an inconsistency in how submodule dependencies are handled.  Microsoft is working on a solution.
+
+You should build both 32-bit and 64-bit as well as Debug and Release because this library targets the correct versions based on your build, and references both 32-bit and 64-bit to enable AnyCPU to work correctly with the P/Invokes.
 
 From here you can follow the directions from the [readme](../README.md#getting-started) to get started.
 
