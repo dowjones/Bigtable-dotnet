@@ -21,6 +21,7 @@ You can now open `src\Bigtable.NET.sln`.
 
 
 ### The hard way ###
+
 Open submodules\grpc\vsprojects\grpc_csharp_ext.sln in Visual Studio 2013.  Build 32 bit version and 64 bit version.  Close.
 
 Open submodules\grpc\src\csharp\Grpc.sln in Visual Studio 2013 or 2015.  Make sure you have the Package Restore turned on.  In Visual Studio 2015, the options are:

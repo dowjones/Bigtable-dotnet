@@ -31,7 +31,6 @@ namespace Examples.Modeled
                 // Create credentials
                 var credentials = await BigtableCredentials.UseApplicationDefaultCredentialsAsync();
 
-                if( false) 
                 // Admin client
                 using (var adminClient = new BigAdminClient(credentials, config))
                 {
@@ -62,13 +61,13 @@ namespace Examples.Modeled
                     var pricingTable = new BigTable(Constants.PricingTable);
 
                     // Scan pricing table
-                    //var pricing = await dataClient.GetRowsAsync(pricingTable, Constants.ScanKeyStart, Constants.ScanKeyEnd, Constants.ScanLimit);
+                    var pricing = await dataClient.GetRowsAsync(pricingTable, Constants.ScanKeyStart, Constants.ScanKeyEnd, Constants.ScanLimit);
 
-                    //// Show the user
-                    //CommandLine.DisplayRows(pricing);
+                    // Show the user
+                    CommandLine.DisplayRows(pricing);
 
-                    //// Wait for keypress
-                    //CommandLine.WaitForUserAndThen("observe rows");
+                    // Wait for keypress
+                    CommandLine.WaitForUserAndThen("observe rows");
 
                     // Test observables
                     var waitSource = new CancellationTokenSource();

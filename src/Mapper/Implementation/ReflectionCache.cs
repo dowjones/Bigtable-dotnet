@@ -152,7 +152,7 @@ namespace BigtableNet.Mapper.Implementation
                 var bigtable = _type.GetCustomAttribute<BigTableAttribute>();
                 if (bigtable != null)
                 {
-                    TableName = bigtable.TableName.UnCamelCase();
+                    TableName = bigtable.TableName; //.UnCamelCase();
                     TableEncoding = bigtable.Encoding;
                     KeyFieldSeparator = bigtable.KeySeparator ?? BigDataClient.DefaultKeySeparator;
 
@@ -906,7 +906,8 @@ namespace BigtableNet.Mapper.Implementation
             public object DeserializeField(Type type, byte[] valueBytes, Encoding encoding)
             {
                 var value = encoding.GetString(valueBytes);
-                return JsonConvert.DeserializeObject(value, type, JsonSettings);
+
+                return type == typeof(string) ? value : JsonConvert.DeserializeObject(value, type, JsonSettings);
             }
         }
 

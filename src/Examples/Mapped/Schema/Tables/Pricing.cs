@@ -24,6 +24,8 @@ namespace Examples.Mapped.Schema.Tables
         public BigTableField<double?> Low;
 
         public BigTableField<double?> Close;
+
+        public BigTableField<string> Note;
     }
 
     [ColumnFamily("day")]
@@ -44,5 +46,7 @@ namespace Examples.Mapped.Schema.Tables
         public double? Low;
 
         public double? Close;
+
+        public string Note;
     }
 }

@@ -41,7 +41,8 @@ namespace Examples.Bootstrap.Data
                         {"Open", ((int) (open*100))/100d},
                         {"Close", ((int) (close*100))/100d},
                         {"High", ((int) (high*100))/100d},
-                        {"Low", ((int) (low*100))/100d}
+                        {"Low", ((int) (low*100))/100d},
+                        {"Note", "StringValue" },
                     });
 
                     // Adjust values
